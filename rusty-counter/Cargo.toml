@@ -5,3 +5,4 @@ authors = ["Max Tyler <maxastyler@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+hhlib-sys = { path = '../hhlib-sys' }
