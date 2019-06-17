@@ -8,7 +8,7 @@ fn main() {
     let nix_cflags = env::var("NIX_CFLAGS_COMPILE").unwrap();
     let hh_path = env::var("HH_PATH_LIB").unwrap();
     println!("cargo:rustc-link-search={}", hh_path);
-    println!("cargo:rustc-link-lib=hh");
+    println!("cargo:rustc-link-lib=hh400");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")

@@ -21,7 +21,7 @@ stdenv.mkDerivation {
         mkdir -p $out/lib
         mkdir -p $out/include
         cp hhlibv${version}-linux-64bit/library/*.h $out/include
-        mv hhlibv${version}-linux-64bit/library/hhlib.so $out/lib/libhh.so
-        patchelf --replace-needed libusb-0.1.so.4 ${libusb}/lib/libusb.so $out/lib/libhh.so
+        mv hhlibv${version}-linux-64bit/library/hhlib.so $out/lib/libhh400.so
+        patchelf --replace-needed libusb-0.1.so.4 ${libusb}/lib/libusb.so $out/lib/libhh400.so
     '';
 }
