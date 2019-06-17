@@ -15,6 +15,6 @@ in
       hharp
 	  ];
     LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
-    HH_PATH_LIB = "${hharp}/lib";
+    LD_LIBRARY_PATH = "${hharp}/lib";
 	}
 
