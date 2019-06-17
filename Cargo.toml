@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+        "hhlib-sys",
+        "rusty-counter",
+]
