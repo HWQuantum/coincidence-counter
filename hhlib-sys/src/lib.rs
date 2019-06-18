@@ -40,7 +40,7 @@ mod tests {
     use super::bindings::*;
     #[test]
     fn it_works() {
-        let devs = (1..2i32).map(|x| crate::device::Device::open_device(x)).collect::<Vec<_>>();
+        let devs = (0..2i32).map(|x| crate::device::Device::open_device(x)).collect::<Vec<_>>();
         assert_eq!(
             devs,
             (0..1i32).map(|_| Err::<crate::device::Device, _>(crate::types::HydraHarpError::UnknownError)).collect::<Vec<_>>()

@@ -97,13 +97,88 @@ impl Device {
         }
     }
 
-    /// Modify the CFD settings.
+    /// Modify the sync CFD settings.
     /// level sets the CFD discriminator level in millivolts with bounds (DISCRMIN, DISCRMAX)
     /// zerox sets the CFD zero cross level in millivolts with bounds (ZCMIN, ZCMAX)
     pub fn set_sync_CFD(&mut self, level: i32, zerox: i32) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetSyncCFD(self.id, level, zerox)
+            },
+            ()
+        }
+    }
+
+    /// Set the sync timing offset in ps
+    /// minimum is CHANOFFSMIN, maximum is CHANOFFSMAX
+    pub fn set_sync_channel_offset(&mut self, offset: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetSyncChannelOffset(self.id, offset)
+            },
+            ()
+        }
+    }
+
+    /// Modify the input CFD. Bounds are the same as the `set_sync_CFD`
+    pub fn set_input_CFD(&mut self, channel: i32, level: i32, zerox: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetInputCFD(self.id, channel, level, zerox)
+            },
+            ()
+        }
+    }
+
+    /// Set the timing offset on the given channel in picoseconds
+    pub fn set_input_channel_offset(&mut self, channel: i32, offset: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetInputChannelOffset(self.id, channel, offset)
+            },
+            ()
+        }
+    }
+
+    /// Set the enabled state of the given channel
+    pub fn set_input_channel_enabled(&mut self, channel: i32, enabled: bool) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetInputChannelEnable(self.id, channel, enabled as i32)
+            },
+            ()
+        }
+    }
+
+    /// This setting determines if a measurement run will stop if any channel reaches the maximum set by `stopcount`.
+    /// If `stop_ofl` is `false` the measurement will continue, but counts above `STOPCNTMAX` in any bin will be clipped.
+    pub fn set_stop_overflow(&mut self, stop_ofl: bool, stopcount: u32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetStopOverflow(self.id, stop_ofl as i32, stopcount)
+            },
+            ()
+        }
+    }
+
+    /// Set the binning. The binning value corresponds to powers of 2*the base resolution.
+    /// eg: `binning = 0 => 1*base_resolution`
+    ///     `binning = 1 => 2*base_resolution`
+    ///     `binning = 2 => 4*base_resolution`
+    pub fun set_binning(&mut self, binning: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetBinning(self.id, binning)
+            },
+            ()
+        }
+    }
+
+    /// Set the histogram time offset in nanoseconds
+    pub fn set_offset(&mut self, offset: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetOffset(self.id, offset)
             },
             ()
         }
