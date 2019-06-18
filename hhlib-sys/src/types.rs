@@ -88,7 +88,30 @@ pub enum MeasurementMode {
 }
 
 #[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
+pub enum MeasurementControl {
+    SingleShotCTC = MEASCTRL_SINGLESHOT_CTC as isize,
+    C1Gated = MEASCTRL_C1_GATED as isize,
+    C1StartCTCStop = MEASCTRL_C1_START_CTC_STOP as isize,
+    C1StartC2Stop = MEASCTRL_C1_START_C2_STOP as isize,
+    ContC1Gated = MEASCTRL_CONT_C1_GATED as isize,
+    ContC1StartCTCStop = MEASCTRL_CONT_C1_START_CTC_STOP as isize,
+    ContCTCRestart = MEASCTRL_CONT_CTC_RESTART as isize,
+}
+
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
 pub enum ReferenceSource {
     Internal = 0,
     External = 1,
+}
+
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
+pub enum EdgeSelection {
+    Falling = 0,
+    Rising = 1,
+}
+
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
+pub enum CTCStatus {
+    Running = 0,
+    Ended = 1,
 }

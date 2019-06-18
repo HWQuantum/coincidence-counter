@@ -1,7 +1,7 @@
 use crate::bindings::*;
 use crate::error_enum_or_value;
 use crate::types::HydraHarpError::*;
-use crate::types::{HydraHarpError, MeasurementMode, ReferenceSource};
+use crate::types::{HydraHarpError, MeasurementMode, MeasurementControl, ReferenceSource, EdgeSelection, CTCStatus};
 
 /// Contains the information of the device - the number it is (0 -> 7) and the serial of it.
 #[derive(Debug, PartialEq)]
@@ -121,7 +121,12 @@ impl Device {
     }
 
     /// Modify the input CFD. Bounds are the same as the `set_sync_CFD`
-    pub fn set_input_CFD(&mut self, channel: i32, level: i32, zerox: i32) -> Result<(), HydraHarpError> {
+    pub fn set_input_CFD(
+        &mut self,
+        channel: i32,
+        level: i32,
+        zerox: i32,
+    ) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetInputCFD(self.id, channel, level, zerox)
@@ -131,7 +136,11 @@ impl Device {
     }
 
     /// Set the timing offset on the given channel in picoseconds
-    pub fn set_input_channel_offset(&mut self, channel: i32, offset: i32) -> Result<(), HydraHarpError> {
+    pub fn set_input_channel_offset(
+        &mut self,
+        channel: i32,
+        offset: i32,
+    ) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetInputChannelOffset(self.id, channel, offset)
@@ -141,7 +150,11 @@ impl Device {
     }
 
     /// Set the enabled state of the given channel
-    pub fn set_input_channel_enabled(&mut self, channel: i32, enabled: bool) -> Result<(), HydraHarpError> {
+    pub fn set_input_channel_enabled(
+        &mut self,
+        channel: i32,
+        enabled: bool,
+    ) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetInputChannelEnable(self.id, channel, enabled as i32)
@@ -152,7 +165,11 @@ impl Device {
 
     /// This setting determines if a measurement run will stop if any channel reaches the maximum set by `stopcount`.
     /// If `stop_ofl` is `false` the measurement will continue, but counts above `STOPCNTMAX` in any bin will be clipped.
-    pub fn set_stop_overflow(&mut self, stop_ofl: bool, stopcount: u32) -> Result<(), HydraHarpError> {
+    pub fn set_stop_overflow(
+        &mut self,
+        stop_ofl: bool,
+        stopcount: u32,
+    ) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetStopOverflow(self.id, stop_ofl as i32, stopcount)
@@ -202,6 +219,54 @@ impl Device {
                 HH_ClearHistMem(self.id)
             },
             ()
+        }
+    }
+
+    /// Set the measurement control code and edges
+    pub fn set_measurement_control(
+        &mut self,
+        control: MeasurementControl,
+        start_edge: EdgeSelection,
+        stop_edge: EdgeSelection,
+    ) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetMeasControl(self.id, num::ToPrimitive::to_i32(&control).unwrap(),
+                                  num::ToPrimitive::to_i32(&start_edge).unwrap(),
+                                  num::ToPrimitive::to_i32(&stop_edge).unwrap())
+            },
+            ()
+        }
+    }
+
+    /// Start a measurement with acquisition time in milliseconds
+    pub fn start_measurement(&mut self, acquisition_time: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_StartMeas(self.id, acquisition_time)
+            },
+            ()
+        }
+    }
+
+    /// Stop a measurement. Can be used before the acquisition time expires
+    pub fn stop_measurement(&mut self) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_StopMeas(self.id)
+            },
+            ()
+        }
+    }
+
+    /// Get the status of the device, whether the acquisiton time is still going, or if it has ended.
+    pub fn get_CTC_status(&self) -> Result<CTCStatus, HydraHarpError> {
+        let mut status: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_CTCStatus(self.id, &mut status as *mut i32)
+            },
+            num::FromPrimitive::from_i32(status).unwrap()
         }
     }
 }
