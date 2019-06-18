@@ -8,6 +8,7 @@ fn main() -> Result<(), HydraHarpError> {
         if let Ok(mut a) = Device::open_device(i) {
             a.initialise(MeasurementMode::Histogramming, ReferenceSource::Internal)?;
             println!("{:?}", a.get_base_resolution()?);
+            println!("{}", a.set_histogram_length(0)?);
             a.close_device()?;
         }
     }

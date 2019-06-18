@@ -165,7 +165,7 @@ impl Device {
     /// eg: `binning = 0 => 1*base_resolution`
     ///     `binning = 1 => 2*base_resolution`
     ///     `binning = 2 => 4*base_resolution`
-    pub fun set_binning(&mut self, binning: i32) -> Result<(), HydraHarpError> {
+    pub fn set_binning(&mut self, binning: i32) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetBinning(self.id, binning)
@@ -179,6 +179,27 @@ impl Device {
         error_enum_or_value! {
             unsafe {
                 HH_SetOffset(self.id, offset)
+            },
+            ()
+        }
+    }
+
+    /// Set the histogram length. Returns the actual length calculated as `1024*(2^lencode)`
+    pub fn set_histogram_length(&mut self, length: i32) -> Result<i32, HydraHarpError> {
+        let mut actual_length: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_SetHistoLen(self.id, length, &mut actual_length as *mut i32)
+            },
+            actual_length
+        }
+    }
+
+    /// Clear the histogram memory
+    pub fn clear_histogram_memory(&mut self) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_ClearHistMem(self.id)
             },
             ()
         }
