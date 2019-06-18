@@ -8,6 +8,8 @@ use crate::types::{HydraHarpError, MeasurementMode, MeasurementControl, Referenc
 pub struct Device {
     pub id: i32,
     pub serial: [i8; 8],
+    /// the length of the histograms returned by get_histogram in u32
+    pub histogram_length: Option<usize>, 
 }
 
 impl Device {
@@ -16,7 +18,7 @@ impl Device {
         let mut serial = [0i8; 8];
         error_enum_or_value! {
             unsafe {HH_OpenDevice(id, serial.as_mut_ptr())},
-            Device {id, serial}
+            Device {id, serial, histogram_length: None}
         }
     }
 
@@ -204,12 +206,16 @@ impl Device {
     /// Set the histogram length. Returns the actual length calculated as `1024*(2^lencode)`
     pub fn set_histogram_length(&mut self, length: i32) -> Result<i32, HydraHarpError> {
         let mut actual_length: i32 = 0;
-        error_enum_or_value! {
+        let return_val = error_enum_or_value! {
             unsafe {
                 HH_SetHistoLen(self.id, length, &mut actual_length as *mut i32)
             },
             actual_length
+        };
+        if let Ok(len) = return_val {
+            self.histogram_length = Some(len as usize);
         }
+        return_val
     }
 
     /// Clear the histogram memory
@@ -267,6 +273,35 @@ impl Device {
                 HH_CTCStatus(self.id, &mut status as *mut i32)
             },
             num::FromPrimitive::from_i32(status).unwrap()
+        }
+    }
+
+    /// Get the histogram from the device. Returns the error `HistogramLengthNotKnown` if
+    /// `self.histogram_length = None`. If clear is true then the acquisiton buffer is cleared upon reading,
+    /// otherwise it isn't
+    pub fn get_histogram(&mut self, channel: i32, clear: bool) -> Result<Vec<u32>, HydraHarpError> {
+        if let Some(histogram_length) = self.histogram_length {
+            // let mut histogram_data: Vec<u32> = Vec::with_capacity(histogram_length);
+            let mut histogram_data: Vec<u32> = vec![0; histogram_length];
+            error_enum_or_value! {
+                unsafe {
+                    HH_GetHistogram(self.id, histogram_data.as_mut_ptr(), channel, clear as i32)
+                },
+                histogram_data
+            }
+        } else {
+            Err(HydraHarpError::HistogramLengthNotKnown)
+        }
+    }
+
+    /// get the resolution at the current histogram bin width in picoseconds
+    pub fn get_resolution(&self) -> Result<f64, HydraHarpError> {
+        let mut resolution: f64 = 0.0;
+        error_enum_or_value! {
+            unsafe {
+                HH_GetResolution(self.id, &mut resolution as *mut f64)
+            },
+            resolution
         }
     }
 }

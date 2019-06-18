@@ -64,6 +64,7 @@ pub enum HydraHarpError {
     EEPROMF10 = HH_ERROR_EEPROM_F10 as isize,
     EEPROMF11 = HH_ERROR_EEPROM_F11 as isize,
     UnknownError = HH_ERROR_EEPROM_F11 as isize - 1,
+    HistogramLengthNotKnown = HH_ERROR_EEPROM_F11 as isize - 2,
 }
 
 #[derive(FromPrimitive, Debug)]
@@ -98,19 +99,19 @@ pub enum MeasurementControl {
     ContCTCRestart = MEASCTRL_CONT_CTC_RESTART as isize,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy, PartialEq)]
 pub enum ReferenceSource {
     Internal = 0,
     External = 1,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy, PartialEq)]
 pub enum EdgeSelection {
     Falling = 0,
     Rising = 1,
 }
 
-#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy)]
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone, Copy, PartialEq)]
 pub enum CTCStatus {
     Running = 0,
     Ended = 1,
