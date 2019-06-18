@@ -1,9 +1,9 @@
 { stdenv, fetchurl, unzip, libusb, patchelf }:
-let
-  version = "3.0.0.2";
-in
-stdenv.mkDerivation {
+
+stdenv.mkDerivation rec {
     name = "hydraHarpLib-${version}";
+
+    version = "3.0.0.2";
 
     buildInputs = [ unzip patchelf libusb ];
 

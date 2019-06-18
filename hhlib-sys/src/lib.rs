@@ -40,10 +40,10 @@ mod tests {
     use super::bindings::*;
     #[test]
     fn it_works() {
-        let f = crate::device::Device::open_device(7);
+        let devs = (1..2i32).map(|x| crate::device::Device::open_device(x)).collect::<Vec<_>>();
         assert_eq!(
-            f,
-            Err::<crate::device::Device, _>(crate::types::HydraHarpError::UnknownError)
+            devs,
+            (0..1i32).map(|_| Err::<crate::device::Device, _>(crate::types::HydraHarpError::UnknownError)).collect::<Vec<_>>()
         );
     }
 
