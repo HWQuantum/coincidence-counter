@@ -352,6 +352,53 @@ impl Device {
             time
         }
     }
+
+    /// get the warnings encoded bitwise
+    pub fn get_warnings(&self) -> Result<i32, HydraHarpError> {
+        let mut warnings: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_GetWarnings(self.id, &mut warnings as *mut i32)
+            },
+            warnings
+        }
+    }
+
+    /// use in TTTR mode
+    /// `buffer` should be at least 128 records long
+    /// `records_to_fetch` should be a multiple of 128, less than the length of `buffer` and no longer than `TTREADMAX`
+    /// In the result, returns Ok(records_written), where records_written is the number of records actually written to the buffer
+    pub fn read_fifo(
+        &mut self,
+        buffer: &mut Vec<u32>,
+        records_to_fetch: i32,
+    ) -> Result<i32, HydraHarpError> {
+        let mut records_written: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_ReadFiFo(
+                    self.id, buffer.as_mut_ptr(), records_to_fetch,
+                    &mut records_written as *mut i32
+                    )
+            },
+            records_written
+        }
+    }
+
+    /// Use in TTTR mode
+    /// set the marker edges
+    pub fn set_marker_edges(&mut self, me1: EdgeSelection, me2: EdgeSelection, me3: EdgeSelection, me4: EdgeSelection) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetMarkerEdges(self.id,
+                                  num::ToPrimitive::to_i32(me1),
+                                  num::ToPrimitive::to_i32(me2),
+                                  num::ToPrimitive::to_i32(me3),
+                                  num::ToPrimitive::to_i32(me4))
+            },
+            ()
+        }
+    }
 }
 
 impl Drop for Device {
