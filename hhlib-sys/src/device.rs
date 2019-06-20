@@ -387,7 +387,13 @@ impl Device {
 
     /// Use in TTTR mode
     /// set the marker edges
-    pub fn set_marker_edges(&mut self, me1: EdgeSelection, me2: EdgeSelection, me3: EdgeSelection, me4: EdgeSelection) -> Result<(), HydraHarpError> {
+    pub fn set_marker_edges(
+        &mut self,
+        me1: EdgeSelection,
+        me2: EdgeSelection,
+        me3: EdgeSelection,
+        me4: EdgeSelection,
+    ) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
                 HH_SetMarkerEdges(self.id,
@@ -395,6 +401,33 @@ impl Device {
                                   num::ToPrimitive::to_i32(me2),
                                   num::ToPrimitive::to_i32(me3),
                                   num::ToPrimitive::to_i32(me4))
+            },
+            ()
+        }
+    }
+
+    /// Use in TTTR mode
+    /// enable or disable the marker edges
+    pub fn enable_marker_edges(
+        &mut self,
+        en1: bool,
+        en2: bool,
+        en3: bool,
+        en4: bool,
+    ) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetMarkerEnable(self.id, en1, en2, en3, en4)},
+            ()
+        }
+    }
+
+    /// Use in TTTR mode
+    /// Set the marker holdoff time in ns
+    pub fn set_marker_holdoff_time(&mut self, holdoff_time: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_SetMarkerHoldoffTime(self.id, holdoff_time)
             },
             ()
         }
