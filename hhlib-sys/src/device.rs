@@ -1,7 +1,9 @@
 use crate::bindings::*;
 use crate::error_enum_or_value;
 use crate::types::HydraHarpError::*;
-use crate::types::{HydraHarpError, MeasurementMode, MeasurementControl, ReferenceSource, EdgeSelection, CTCStatus};
+use crate::types::{
+    CTCStatus, EdgeSelection, HydraHarpError, MeasurementControl, MeasurementMode, ReferenceSource,
+};
 
 /// Contains the information of the device - the number it is (0 -> 7) and the serial of it.
 #[derive(Debug, PartialEq)]
@@ -9,7 +11,7 @@ pub struct Device {
     pub id: i32,
     pub serial: [i8; 8],
     /// the length of the histograms returned by get_histogram in u32
-    pub histogram_length: Option<usize>, 
+    pub histogram_length: Option<usize>,
 }
 
 impl Device {
@@ -302,6 +304,52 @@ impl Device {
                 HH_GetResolution(self.id, &mut resolution as *mut f64)
             },
             resolution
+        }
+    }
+
+    /// get the current sync rate
+    pub fn get_sync_rate(&self) -> Result<i32, HydraHarpError> {
+        let mut sync_rate: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_GetSyncRate(self.id, &mut sync_rate as *mut i32)
+            },
+            sync_rate
+        }
+    }
+
+    /// get the current count rate
+    /// allow at least 100ms after initialise or set_sync_divider to get a stable meter reading
+    /// wait at least 100ms to get a new reading. This is the gate time of the counters
+    pub fn get_count_rate(&self, channel: i32) -> Result<i32, HydraHarpError> {
+        let mut count_rate: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_GetCountRate(self.id, channel, &mut count_rate as *mut i32)
+            },
+            count_rate
+        }
+    }
+
+    /// get the flags. Use the `FLAG_*` variables to extract the different flags
+    pub fn get_flags(&self) -> Result<i32, HydraHarpError> {
+        let mut flags: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_GetFlags(self.id, &mut flags as *mut i32)
+            },
+            flags
+        }
+    }
+
+    /// get the elapsed measurement time in ms
+    pub fn get_elapsed_measurement_time(&self) -> Result<f64, HydraHarpError> {
+        let mut time: f64 = 0.0;
+        error_enum_or_value! {
+            unsafe {
+                HH_GetElapsedMeasTime(self.id, &mut time as *mut f64)
+            },
+            time
         }
     }
 }
