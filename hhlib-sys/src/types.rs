@@ -1,3 +1,4 @@
+//! Definitions of the types used. Enums n that
 use crate::bindings::*;
 
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq)]

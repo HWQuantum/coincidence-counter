@@ -1,3 +1,5 @@
+//! The device struct and implementation
+
 use crate::bindings::*;
 use crate::error_enum_or_value;
 use crate::types::HydraHarpError::*;

@@ -2,22 +2,25 @@ extern crate hhlib_sys;
 
 use hhlib_sys::device::Device;
 use hhlib_sys::types::{HydraHarpError, MeasurementMode, ReferenceSource, CTCStatus};
+use std::thread::sleep_ms;
 
 fn main() -> Result<(), HydraHarpError> {
-    for i in 0..8 {
-        if let Ok(mut a) = Device::open_device(i) {
-            a.initialise(MeasurementMode::Histogramming, ReferenceSource::Internal)?;
-            println!("{:?}", a.get_base_resolution()?);
-            println!("{}", a.set_histogram_length(3)?);
-            println!("{:?}", a.get_CTC_status()?);
-            a.calibrate();
-            println!("Hello");
-            a.start_measurement(1000)?;
-            a.stop_measurement()?;
-            println!("{:?}", a.get_histogram(0, true)?);
-            println!("{:?}", a.get_resolution()?);
-            a.close_device()?;
-        }
+    let mut dev = Device::open_device(0)?;
+    dev.initialise(MeasurementMode::T2, ReferenceSource::Internal)?;
+    dev.calibrate()?;
+    dev.set_sync_divider(1)?;
+    dev.set_sync_CFD(50, 10)?;
+    dev.set_sync_channel_offset(-5000)?;
+    let num_channels = dev.get_number_of_input_channels()?;
+    for i in (0..num_channels) {
+        dev.set_input_CFD(i, 50, 10)?;
+        dev.set_input_channel_offset(i, 0)?;
     }
+    sleep_ms(200);
+    dev.start_measurement(1000)?;
+    let mut buffer = vec![0u32; 1000];
+    sleep_ms(1000);
+    let num_read = dev.read_fifo(&mut buffer, 128*2)? as usize;
+    println!("{:?}", &buffer[..num_read]);
     Ok(())
 }

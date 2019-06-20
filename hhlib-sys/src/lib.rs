@@ -1,3 +1,5 @@
+//! Bindings to the HydraHarp400 library from PicoQuant
+
 #[macro_use]
 extern crate num_derive;
 
