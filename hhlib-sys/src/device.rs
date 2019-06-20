@@ -397,10 +397,10 @@ impl Device {
         error_enum_or_value! {
             unsafe {
                 HH_SetMarkerEdges(self.id,
-                                  num::ToPrimitive::to_i32(me1),
-                                  num::ToPrimitive::to_i32(me2),
-                                  num::ToPrimitive::to_i32(me3),
-                                  num::ToPrimitive::to_i32(me4))
+                                  num::ToPrimitive::to_i32(&me1).unwrap(),
+                                  num::ToPrimitive::to_i32(&me2).unwrap(),
+                                  num::ToPrimitive::to_i32(&me3).unwrap(),
+                                  num::ToPrimitive::to_i32(&me4).unwrap())
             },
             ()
         }
@@ -417,7 +417,7 @@ impl Device {
     ) -> Result<(), HydraHarpError> {
         error_enum_or_value! {
             unsafe {
-                HH_SetMarkerEnable(self.id, en1, en2, en3, en4)},
+                HH_SetMarkerEnable(self.id, en1 as i32, en2 as i32, en3 as i32, en4 as i32)},
             ()
         }
     }
