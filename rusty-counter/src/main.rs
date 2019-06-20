@@ -15,6 +15,7 @@ fn main() -> Result<(), HydraHarpError> {
             a.start_measurement(1000)?;
             a.stop_measurement()?;
             println!("{:?}", a.get_histogram(0, true)?);
+            println!("{:?}", a.get_resolution()?);
             a.close_device()?;
         }
     }
