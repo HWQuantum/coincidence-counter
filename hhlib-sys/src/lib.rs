@@ -107,21 +107,23 @@ fn index_to_coincidence_channels(index: usize) -> (u8, u8) {
     }
 }
 
-/// Sort out a vector of channels and times into an array of coincidences
-pub fn two_way_coincidences(coincidence_window: u64, times: &[(u8, u64)]) -> [u64; 29] {
-    let mut counts = [0; 29];
+/// Sort out a vector of channels and times into an array of singles and an array of coincidences
+pub fn singles_and_two_way_coincidences(coincidence_window: u64, times: &[(u8, u64)]) -> ([u64; 8], [u64; 29]) {
+    let mut singles = [0; 8];
+    let mut coincidences = [0; 29];
     for (i, (c1, t1)) in times.iter().enumerate() {
+        singles[c1] += 1;
         for (c2, t2) in times.iter().skip(i + 1) {
             if c1 != c2 {
                 if t2 - t1 < coincidence_window {
-                    counts[coincidence_channels_to_index((*c1, *c2))] += 1;
+                    coincidences[coincidence_channels_to_index((*c1, *c2))] += 1;
                 } else {
                     break;
                 }
             }
         }
     }
-    counts
+    (singles, coincidences)
 }
 
 #[cfg(test)]
