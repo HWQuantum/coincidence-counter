@@ -18,14 +18,24 @@ fn main() -> Result<(), HydraHarpError> {
         dev.set_input_channel_offset(i, 0)?;
     }
     sleep_ms(200);
-    dev.start_measurement(1000)?;
-    let mut buffer = vec![0u32; 1000];
-    sleep_ms(1000);
-    let num_read = dev.read_fifo(&mut buffer, 128 * 2)? as usize;
-    let mut mes = Measurement::new(0);
-    for i in &buffer[..num_read] {
-        println!("{:032b}", i);
+    for i in (0..1000) {
+        let results = run_measurement_and_wait_till_finished(20, &mut dev)?;
+        let mut measurement = Measurement::new(0);
+        let channel_times = measurement.convert_values_T2(&results);
+        let coincidences = hhlib_sys::two_way_coincidences(10000000, &channel_times);
+        println!("{:?}", coincidences);
     }
-    println!("{:?}", mes.convert_values_T2(&buffer[..num_read]));
     Ok(())
+}
+
+fn run_measurement_and_wait_till_finished(time: u32, dev: &mut Device) -> Result<Vec<u32>, HydraHarpError> {
+    dev.start_measurement(time as i32)?;
+    sleep_ms(time);
+    while dev.get_CTC_status()? != hhlib_sys::types::CTCStatus::Running {
+        sleep_ms(1);
+    }
+    let buffer_length = 128*100;
+    let mut buffer = vec![0u32; buffer_length];
+    let num_read = dev.read_fifo(&mut buffer, (buffer_length) as i32)? as usize;
+    Ok(buffer[..num_read].to_vec())
 }
