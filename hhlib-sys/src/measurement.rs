@@ -5,11 +5,12 @@ use std::time::Duration;
 
 const OVERFLOW_PERIOD: u64 = 33554432;
 const OVERFLOW_MASK: u32 = (63 << 25);
-const TIME_MASK: u32 = (1<<24)-1;
+const TIME_MASK: u32 = (1 << 24) - 1;
 
 /// Describes the different types a T2 value can have
 pub enum T2Value {
-    Time(u32),
+    /// The u8 is the channel number, the u32 is the time
+    Time(u8, u32),
     Overflow(u32),
     InternalSync(u8),
     ExternalSync(u8),
@@ -19,11 +20,11 @@ pub enum T2Value {
 pub fn convert_T2_value(v: &u32) -> T2Value {
     use crate::measurement::T2Value::*;
     match (v & (1 << 31)) {
-        0 => Time(v & TIME_MASK),
+        0 => Time((v >> 25) as u8 & 63u8, v & TIME_MASK),
         _ => match (v & OVERFLOW_MASK) {
-                OVERFLOW_MASK => Overflow(v & ((1<<24)-1)),
-                _ => InternalSync(0)
-            }
+            OVERFLOW_MASK => Overflow(v & ((1 << 24) - 1)),
+            _ => InternalSync(0),
+        },
     }
 }
 
@@ -33,23 +34,22 @@ pub struct Measurement {
 }
 
 impl Measurement {
-
     /// Define a new measurement, setting an overflow if needed
     pub fn new(overflow: u64) -> Measurement {
         Measurement {
-            time_overflow: overflow
+            time_overflow: overflow,
         }
     }
 
-    /// Convert a set of fifo outputs in T2 mode into a vector of times
-    pub fn convert_values_T2(&mut self, input: &[u32]) -> Vec<u64> {
+    /// Convert a set of fifo outputs in T2 mode into a vector of channels and times
+    pub fn convert_values_T2(&mut self, input: &[u32]) -> Vec<(u8, u64)> {
         use crate::measurement::T2Value::*;
-        let mut times: Vec<u64> = Vec::with_capacity(input.len());
+        let mut times = Vec::with_capacity(input.len());
         for i in input {
             match convert_T2_value(i) {
-                Time(t) => times.push(t as u64 + self.time_overflow),
-                Overflow(t) => self.time_overflow += (t as u64) *OVERFLOW_PERIOD,
-                _ => ()
+                Time(c, t) => times.push((c, t as u64 + self.time_overflow)),
+                Overflow(t) => self.time_overflow += (t as u64) * OVERFLOW_PERIOD,
+                _ => (),
             }
         }
         times

@@ -1,8 +1,8 @@
 extern crate hhlib_sys;
 
 use hhlib_sys::device::Device;
-use hhlib_sys::types::{HydraHarpError, MeasurementMode, ReferenceSource, CTCStatus};
 use hhlib_sys::measurement::Measurement;
+use hhlib_sys::types::{CTCStatus, HydraHarpError, MeasurementMode, ReferenceSource};
 use std::thread::sleep_ms;
 
 fn main() -> Result<(), HydraHarpError> {
@@ -21,7 +21,7 @@ fn main() -> Result<(), HydraHarpError> {
     dev.start_measurement(1000)?;
     let mut buffer = vec![0u32; 1000];
     sleep_ms(1000);
-    let num_read = dev.read_fifo(&mut buffer, 128*2)? as usize;
+    let num_read = dev.read_fifo(&mut buffer, 128 * 2)? as usize;
     let mut mes = Measurement::new(0);
     for i in &buffer[..num_read] {
         println!("{:032b}", i);
