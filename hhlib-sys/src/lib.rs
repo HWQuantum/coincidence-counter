@@ -112,7 +112,7 @@ pub fn singles_and_two_way_coincidences(coincidence_window: u64, times: &[(u8, u
     let mut singles = [0; 8];
     let mut coincidences = [0; 29];
     for (i, (c1, t1)) in times.iter().enumerate() {
-        singles[c1] += 1;
+        singles[*c1 as usize] += 1;
         for (c2, t2) in times.iter().skip(i + 1) {
             if c1 != c2 {
                 if t2 - t1 < coincidence_window {

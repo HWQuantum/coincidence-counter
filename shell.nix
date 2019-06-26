@@ -12,7 +12,8 @@ in
 	    rustChannels.stable.rust
 	    rustChannels.stable.cargo
 	    llvmPackages.libclang
-      hharp
+      	    hharp
+	    (python3.withPackages(ps: with ps; [ pyqtgraph ]))
 	  ];
     LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
     LD_LIBRARY_PATH = "${hharp}/lib";

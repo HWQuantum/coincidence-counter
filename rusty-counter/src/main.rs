@@ -19,11 +19,11 @@ fn main() -> Result<(), HydraHarpError> {
     }
     sleep_ms(200);
     for i in (0..1000) {
-        let results = run_measurement_and_wait_till_finished(20, &mut dev)?;
+        let results = run_measurement_and_wait_till_finished(200, &mut dev)?;
         let mut measurement = Measurement::new(0);
         let channel_times = measurement.convert_values_T2(&results);
-        let coincidences = hhlib_sys::two_way_coincidences(10000000, &channel_times);
-        println!("{:?}", coincidences);
+        let (singles, coincidences) = hhlib_sys::singles_and_two_way_coincidences(100000, &channel_times);
+        println!("{:?}\n{:?}", singles, coincidences);
     }
     Ok(())
 }
@@ -34,7 +34,7 @@ fn run_measurement_and_wait_till_finished(time: u32, dev: &mut Device) -> Result
     while dev.get_CTC_status()? != hhlib_sys::types::CTCStatus::Running {
         sleep_ms(1);
     }
-    let buffer_length = 128*100;
+    let buffer_length = 128*1000;
     let mut buffer = vec![0u32; buffer_length];
     let num_read = dev.read_fifo(&mut buffer, (buffer_length) as i32)? as usize;
     Ok(buffer[..num_read].to_vec())
