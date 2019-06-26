@@ -9,6 +9,7 @@ pub mod bindings {
 
 pub mod device;
 pub mod types;
+pub mod measurement;
 
 use crate::bindings::*;
 use crate::types::HydraHarpError::*;
