@@ -1,5 +1,7 @@
 //! The device struct and implementation
 
+use pyo3::prelude::*;
+use pyo3::wrap_pyfunction;
 use crate::bindings::*;
 use crate::error_enum_or_value;
 use crate::types::HydraHarpError::*;
@@ -8,6 +10,7 @@ use crate::types::{
 };
 
 /// Contains the information of the device - the number it is (0 -> 7) and the serial of it.
+#[pyclass]
 #[derive(Debug, PartialEq)]
 pub struct Device {
     pub id: i32,

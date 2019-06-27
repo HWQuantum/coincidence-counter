@@ -108,6 +108,7 @@ fn index_to_coincidence_channels(index: usize) -> (u8, u8) {
 }
 
 /// Sort out a vector of channels and times into an array of singles and an array of coincidences
+/// THE SLICE INPUT SHOULD BE SORTED
 pub fn singles_and_two_way_coincidences(coincidence_window: u64, times: &[(u8, u64)]) -> ([u64; 8], [u64; 29]) {
     use std::cmp::{min, max};
     let mut singles = [0; 8];

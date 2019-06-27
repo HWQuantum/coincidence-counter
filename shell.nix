@@ -9,8 +9,8 @@ in
 
 
 	  buildInputs = [
-	    rustChannels.stable.rust
-	    rustChannels.stable.cargo
+	    rustChannels.nightly.rust
+	    rustChannels.nightly.cargo
 	    llvmPackages.libclang
       	    hharp
 	    (python3.withPackages(ps: with ps; [ pyqtgraph ]))
