@@ -109,13 +109,15 @@ fn index_to_coincidence_channels(index: usize) -> (u8, u8) {
 
 /// Sort out a vector of channels and times into an array of singles and an array of coincidences
 pub fn singles_and_two_way_coincidences(coincidence_window: u64, times: &[(u8, u64)]) -> ([u64; 8], [u64; 29]) {
+    use std::cmp::{min, max};
     let mut singles = [0; 8];
     let mut coincidences = [0; 29];
     for (i, (c1, t1)) in times.iter().enumerate() {
         singles[*c1 as usize] += 1;
         for (c2, t2) in times.iter().skip(i + 1) {
             if c1 != c2 {
-                if t2 - t1 < coincidence_window {
+                if t2 < t1 { println!("{}, {}", t1, t2); }
+                if max(t1, t2) - min(t1, t2) < coincidence_window {
                     coincidences[coincidence_channels_to_index((*c1, *c2))] += 1;
                 } else {
                     break;
