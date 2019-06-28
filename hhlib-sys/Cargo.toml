@@ -11,6 +11,9 @@ bindgen = "0.49"
 name = "hhlib_sys"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = [ "pyo3" ]
+
 [dependencies]
 num-derive = "0.2"
 num-traits = "0.2"
@@ -19,3 +22,4 @@ num = "0.2"
 [dependencies.pyo3]
 version = "0.7.0"
 features = ["extension-module"]
+optional = true

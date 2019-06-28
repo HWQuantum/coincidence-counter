@@ -13,9 +13,13 @@ pub mod bindings {
 pub mod device;
 pub mod measurement;
 pub mod types;
+#[cfg(feature = "pyo3")]
+pub mod python_wrapper;
 
 use crate::bindings::*;
+use crate::device::Device;
 use crate::types::HydraHarpError::*;
+use crate::types::convert_hydra_harp_result;
 
 /// Take a C function which returns an i32 error and return either Ok(type) or Err(ErrorCode)
 #[macro_export]
@@ -130,12 +134,6 @@ pub fn singles_and_two_way_coincidences(coincidence_window: u64, times: &[(u8, u
         }
     }
     (singles, coincidences)
-}
-
-#[pymodule]
-fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-
-    Ok(())
 }
 
 #[cfg(test)]
