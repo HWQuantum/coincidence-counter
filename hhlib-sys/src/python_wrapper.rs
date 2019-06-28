@@ -1,8 +1,11 @@
 use crate::device::Device;
+use crate::measurement::Measurement;
 use crate::types::convert_hydra_harp_result;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn unwrap_or_value_error<T>(x: i32) -> PyResult<T>
 where
@@ -171,7 +174,7 @@ pub fn get_CTC_status(d: &mut Device) -> PyResult<i32> {
         Err(e) => Err(e),
     }
 }
-        
+
 // /// Get the histogram from the device. Returns the error `HistogramLengthNotKnown` if
 // /// `self.histogram_length = None`. If clear is true then the acquisiton buffer is cleared upon reading,
 // /// otherwise it isn't
@@ -224,6 +227,10 @@ pub fn get_sync_rate(d: &mut Device) -> PyResult<i32> {
 //     }
 // }
 
+#[pyfunction]
+pub fn get_elapsed_measurement_time(d: &mut Device) -> PyResult<f64> {
+    convert_hydra_harp_result(d.get_elapsed_measurement_time())
+}
 // /// get the elapsed measurement time in ms
 // pub fn get_elapsed_measurement_time(&self) -> Result<f64, HydraHarpError> {
 //     let mut time: f64 = 0.0;
@@ -315,6 +322,102 @@ pub fn get_sync_rate(d: &mut Device) -> PyResult<i32> {
 //     }
 // }
 
+#[pyfunction]
+/// convert from a coincidence channel pair (c1, c2) into an index
+fn coincidence_channels_to_index(channels: (u8, u8)) -> usize {
+    match channels {
+        (0, 1) | (1, 0) => 0,
+        (0, 2) | (2, 0) => 1,
+        (0, 3) | (3, 0) => 2,
+        (0, 4) | (4, 0) => 3,
+        (0, 5) | (5, 0) => 4,
+        (0, 6) | (6, 0) => 5,
+        (0, 7) | (7, 0) => 6,
+        (1, 2) | (2, 1) => 7,
+        (1, 3) | (3, 1) => 8,
+        (1, 4) | (4, 1) => 9,
+        (1, 5) | (5, 1) => 10,
+        (1, 6) | (6, 1) => 11,
+        (1, 7) | (7, 1) => 12,
+        (2, 3) | (3, 2) => 13,
+        (2, 4) | (4, 2) => 14,
+        (2, 5) | (5, 2) => 15,
+        (2, 6) | (6, 2) => 16,
+        (2, 7) | (7, 2) => 17,
+        (3, 4) | (4, 3) => 18,
+        (3, 5) | (5, 3) => 19,
+        (3, 6) | (6, 3) => 20,
+        (3, 7) | (7, 3) => 21,
+        (4, 5) | (5, 4) => 22,
+        (4, 6) | (6, 4) => 23,
+        (4, 7) | (7, 4) => 24,
+        (5, 6) | (6, 5) => 25,
+        (5, 7) | (7, 5) => 26,
+        (6, 7) | (7, 6) => 27,
+        _ => 28,
+    }
+}
+
+#[pyfunction]
+fn index_to_coincidence_channels(index: usize) -> (u8, u8) {
+    match index {
+        0 => (0, 1),
+        1 => (0, 2),
+        2 => (0, 3),
+        3 => (0, 4),
+        4 => (0, 5),
+        5 => (0, 6),
+        6 => (0, 7),
+        7 => (1, 2),
+        8 => (1, 3),
+        9 => (1, 4),
+        10 => (1, 5),
+        11 => (1, 6),
+        12 => (1, 7),
+        13 => (2, 3),
+        14 => (2, 4),
+        15 => (2, 5),
+        16 => (2, 6),
+        17 => (2, 7),
+        18 => (3, 4),
+        19 => (3, 5),
+        20 => (3, 6),
+        21 => (3, 7),
+        22 => (4, 5),
+        23 => (4, 6),
+        24 => (4, 7),
+        25 => (5, 6),
+        26 => (5, 7),
+        27 => (6, 7),
+        _ => (255, 255),
+    }
+}
+
+#[pyfunction]
+/// Make a measurement for `acquisition_time` ms and return a tuple containing
+/// `([singles], [coincidences])`
+pub fn measure_and_get_counts(
+    d: &mut Device,
+    acquisition_time: i32,
+    coincidence_window: u64,
+) -> PyResult<(Vec<u64>, Vec<u64>)> {
+    convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
+    sleep(Duration::from_millis(acquisition_time as u64));
+    while convert_hydra_harp_result(d.get_CTC_status())? == crate::types::CTCStatus::Running {
+        sleep(Duration::from_millis(1));
+    }
+    let buffer_length = 131072;
+    let mut buffer = vec![0u32; buffer_length];
+    let num_read =
+        convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;
+    let mut measurement = Measurement::new(0);
+    let mut channel_times = measurement.convert_values_T2(&buffer[..num_read]);
+    channel_times.sort_by_key(|(_, t)| *t);
+    let (singles, coincidences) =
+        crate::singles_and_two_way_coincidences(coincidence_window, &channel_times);
+    Ok((singles.to_vec(), coincidences.to_vec()))
+}
+
 #[pymodule]
 fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(open_device))?;
@@ -325,6 +428,7 @@ fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(calibrate))?;
     m.add_wrapped(wrap_pyfunction!(set_sync_divider))?;
     m.add_wrapped(wrap_pyfunction!(set_sync_channel_offset))?;
+    m.add_wrapped(wrap_pyfunction!(set_sync_CFD))?;
     m.add_wrapped(wrap_pyfunction!(set_input_CFD))?;
     m.add_wrapped(wrap_pyfunction!(set_input_channel_offset))?;
     m.add_wrapped(wrap_pyfunction!(set_input_channel_enabled))?;
@@ -334,5 +438,9 @@ fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(get_CTC_status))?;
     m.add_wrapped(wrap_pyfunction!(get_resolution))?;
     m.add_wrapped(wrap_pyfunction!(get_sync_rate))?;
+    m.add_wrapped(wrap_pyfunction!(get_elapsed_measurement_time))?;
+    m.add_wrapped(wrap_pyfunction!(measure_and_get_counts))?;
+    m.add_wrapped(wrap_pyfunction!(coincidence_channels_to_index))?;
+    m.add_wrapped(wrap_pyfunction!(index_to_coincidence_channels))?;
     Ok(())
 }
