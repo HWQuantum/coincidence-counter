@@ -1,5 +1,7 @@
 //! Definitions of the types used. Enums n that
 use crate::bindings::*;
+use pyo3::exceptions;
+use pyo3::prelude::*;
 
 #[derive(FromPrimitive, ToPrimitive, Debug, PartialEq)]
 pub enum HydraHarpError {
@@ -66,6 +68,147 @@ pub enum HydraHarpError {
     EEPROMF11 = HH_ERROR_EEPROM_F11 as isize,
     UnknownError = HH_ERROR_EEPROM_F11 as isize - 1,
     HistogramLengthNotKnown = HH_ERROR_EEPROM_F11 as isize - 2,
+}
+
+pub mod py_hydra_harp_error{
+    use pyo3::{exceptions, create_exception};
+    /// This module contains the hydra harp errors implemented as python exceptions
+    create_exception!(hhlib_sys, DeviceFailedToOpen, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceBusy, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceHEventFail, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceCallBSetFail, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceBarmapFail, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceFailedToClose, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceFailedToReset, exceptions::Exception);
+    create_exception!(hhlib_sys, FailedToGetDeviceVersion, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceVersionMismatch, exceptions::Exception);
+    create_exception!(hhlib_sys, DeviceNotOpen, exceptions::Exception);
+    create_exception!(hhlib_sys, InstanceRunning, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidArgument, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidMode, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidOption, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidMemory, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidRData, exceptions::Exception);
+    create_exception!(hhlib_sys, NotInitialized, exceptions::Exception);
+    create_exception!(hhlib_sys, NotCalibrated, exceptions::Exception);
+    create_exception!(hhlib_sys, DMAFail, exceptions::Exception);
+    create_exception!(hhlib_sys, XTDeviceFail, exceptions::Exception);
+    create_exception!(hhlib_sys, FPGAConfFail, exceptions::Exception);
+    create_exception!(hhlib_sys, IFConfFail, exceptions::Exception);
+    create_exception!(hhlib_sys, FIFOResetFail, exceptions::Exception);
+    create_exception!(hhlib_sys, FailedToGetDriverVersion, exceptions::Exception);
+    create_exception!(hhlib_sys, DriverVersionMismatch, exceptions::Exception);
+    create_exception!(hhlib_sys, USBGetIFInfoFail, exceptions::Exception);
+    create_exception!(hhlib_sys, USBHiSpeedFail, exceptions::Exception);
+    create_exception!(hhlib_sys, USBVCMDFail, exceptions::Exception);
+    create_exception!(hhlib_sys, USBBulkRDFail, exceptions::Exception);
+    create_exception!(hhlib_sys, USBResetFail, exceptions::Exception);
+    create_exception!(hhlib_sys, LaneUpTimeout, exceptions::Exception);
+    create_exception!(hhlib_sys, DoneAllTimeout, exceptions::Exception);
+    create_exception!(hhlib_sys, MODACKTimeout, exceptions::Exception);
+    create_exception!(hhlib_sys, MACTIVETimeout, exceptions::Exception);
+    create_exception!(hhlib_sys, MEMClearFail, exceptions::Exception);
+    create_exception!(hhlib_sys, MEMTestFail, exceptions::Exception);
+    create_exception!(hhlib_sys, CALIBFail, exceptions::Exception);
+    create_exception!(hhlib_sys, REFSELFail, exceptions::Exception);
+    create_exception!(hhlib_sys, StatusFail, exceptions::Exception);
+    create_exception!(hhlib_sys, MODNUMFail, exceptions::Exception);
+    create_exception!(hhlib_sys, DIGMUXFail, exceptions::Exception);
+    create_exception!(hhlib_sys, MODMUXFail, exceptions::Exception);
+    create_exception!(hhlib_sys, MODFWPCBMismatch, exceptions::Exception);
+    create_exception!(hhlib_sys, MODFWVERMismatch, exceptions::Exception);
+    create_exception!(hhlib_sys, MODPropertyMismatch, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidMagic, exceptions::Exception);
+    create_exception!(hhlib_sys, InvalidLength, exceptions::Exception);
+    create_exception!(hhlib_sys, RateFail, exceptions::Exception);
+    create_exception!(hhlib_sys, MODFWVERTooLow, exceptions::Exception);
+    create_exception!(hhlib_sys, MODFWVERTooHigh, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF01, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF02, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF03, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF04, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF05, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF06, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF07, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF08, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF09, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF10, exceptions::Exception);
+    create_exception!(hhlib_sys, EEPROMF11, exceptions::Exception);
+    create_exception!(hhlib_sys, UnknownError, exceptions::Exception);
+    create_exception!(hhlib_sys, HistogramLengthNotKnown, exceptions::Exception);
+}
+
+/// Convert a function returning a `Result<T, HydraHarpError>` into a PyResult
+pub fn convert_hydra_harp_result<T>(r: Result<T, HydraHarpError>) -> PyResult<T> {
+    use py_hydra_harp_error::*;
+    match r {
+        Ok(x) => Ok(x),
+        Err(e) => Err(match e {
+            HydraHarpError::DeviceFailedToOpen => DeviceFailedToOpen.into(),
+            HydraHarpError::DeviceBusy => DeviceBusy.into(),
+            HydraHarpError::DeviceHEventFail => DeviceHEventFail.into(),
+            HydraHarpError::DeviceCallBSetFail => DeviceCallBSetFail.into(),
+            HydraHarpError::DeviceBarmapFail => DeviceBarmapFail.into(),
+            HydraHarpError::DeviceFailedToClose => DeviceFailedToClose.into(),
+            HydraHarpError::DeviceFailedToReset => DeviceFailedToReset.into(),
+            HydraHarpError::FailedToGetDeviceVersion => FailedToGetDeviceVersion.into(),
+            HydraHarpError::DeviceVersionMismatch => DeviceVersionMismatch.into(),
+            HydraHarpError::DeviceNotOpen => DeviceNotOpen.into(),
+            HydraHarpError::InstanceRunning => InstanceRunning.into(),
+            HydraHarpError::InvalidArgument => InvalidArgument.into(),
+            HydraHarpError::InvalidMode => InvalidMode.into(),
+            HydraHarpError::InvalidOption => InvalidOption.into(),
+            HydraHarpError::InvalidMemory => InvalidMemory.into(),
+            HydraHarpError::InvalidRData => InvalidRData.into(),
+            HydraHarpError::NotInitialized => NotInitialized.into(),
+            HydraHarpError::NotCalibrated => NotCalibrated.into(),
+            HydraHarpError::DMAFail => DMAFail.into(),
+            HydraHarpError::XTDeviceFail => XTDeviceFail.into(),
+            HydraHarpError::FPGAConfFail => FPGAConfFail.into(),
+            HydraHarpError::IFConfFail => IFConfFail.into(),
+            HydraHarpError::FIFOResetFail => FIFOResetFail.into(),
+            HydraHarpError::FailedToGetDriverVersion => FailedToGetDriverVersion.into(),
+            HydraHarpError::DriverVersionMismatch => DriverVersionMismatch.into(),
+            HydraHarpError::USBGetIFInfoFail => USBGetIFInfoFail.into(),
+            HydraHarpError::USBHiSpeedFail => USBHiSpeedFail.into(),
+            HydraHarpError::USBVCMDFail => USBVCMDFail.into(),
+            HydraHarpError::USBBulkRDFail => USBBulkRDFail.into(),
+            HydraHarpError::USBResetFail => USBResetFail.into(),
+            HydraHarpError::LaneUpTimeout => LaneUpTimeout.into(),
+            HydraHarpError::DoneAllTimeout => DoneAllTimeout.into(),
+            HydraHarpError::MODACKTimeout => MODACKTimeout.into(),
+            HydraHarpError::MACTIVETimeout => MACTIVETimeout.into(),
+            HydraHarpError::MEMClearFail => MEMClearFail.into(),
+            HydraHarpError::MEMTestFail => MEMTestFail.into(),
+            HydraHarpError::CALIBFail => CALIBFail.into(),
+            HydraHarpError::REFSELFail => REFSELFail.into(),
+            HydraHarpError::StatusFail => StatusFail.into(),
+            HydraHarpError::MODNUMFail => MODNUMFail.into(),
+            HydraHarpError::DIGMUXFail => DIGMUXFail.into(),
+            HydraHarpError::MODMUXFail => MODMUXFail.into(),
+            HydraHarpError::MODFWPCBMismatch => MODFWPCBMismatch.into(),
+            HydraHarpError::MODFWVERMismatch => MODFWVERMismatch.into(),
+            HydraHarpError::MODPropertyMismatch => MODPropertyMismatch.into(),
+            HydraHarpError::InvalidMagic => InvalidMagic.into(),
+            HydraHarpError::InvalidLength => InvalidLength.into(),
+            HydraHarpError::RateFail => RateFail.into(),
+            HydraHarpError::MODFWVERTooLow => MODFWVERTooLow.into(),
+            HydraHarpError::MODFWVERTooHigh => MODFWVERTooHigh.into(),
+            HydraHarpError::EEPROMF01 => EEPROMF01.into(),
+            HydraHarpError::EEPROMF02 => EEPROMF02.into(),
+            HydraHarpError::EEPROMF03 => EEPROMF03.into(),
+            HydraHarpError::EEPROMF04 => EEPROMF04.into(),
+            HydraHarpError::EEPROMF05 => EEPROMF05.into(),
+            HydraHarpError::EEPROMF06 => EEPROMF06.into(),
+            HydraHarpError::EEPROMF07 => EEPROMF07.into(),
+            HydraHarpError::EEPROMF08 => EEPROMF08.into(),
+            HydraHarpError::EEPROMF09 => EEPROMF09.into(),
+            HydraHarpError::EEPROMF10 => EEPROMF10.into(),
+            HydraHarpError::EEPROMF11 => EEPROMF11.into(),
+            HydraHarpError::UnknownError => UnknownError.into(),
+            HydraHarpError::HistogramLengthNotKnown => HistogramLengthNotKnown.into(),
+        }),
+    }
 }
 
 #[derive(FromPrimitive, Debug)]

@@ -3,6 +3,9 @@
 #[macro_use]
 extern crate num_derive;
 
+use pyo3::prelude::*;
+use pyo3::wrap_pyfunction;
+
 pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
@@ -127,6 +130,12 @@ pub fn singles_and_two_way_coincidences(coincidence_window: u64, times: &[(u8, u
         }
     }
     (singles, coincidences)
+}
+
+#[pymodule]
+fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+
+    Ok(())
 }
 
 #[cfg(test)]
