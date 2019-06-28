@@ -192,7 +192,7 @@ pub fn get_CTC_status(d: &mut Device) -> PyResult<i32> {
 
 #[pyfunction]
 pub fn get_resolution(d: &mut Device) -> PyResult<f64> {
-    convert_hydra_harp_result(d.get_resolution)
+    convert_hydra_harp_result(d.get_resolution())
 }
 
 #[pyfunction]
