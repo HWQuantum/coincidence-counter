@@ -1,6 +1,7 @@
 //! The device struct and implementation
 
 use pyo3::prelude::*;
+use pyo3::wrap_pyfunction;
 use crate::bindings::*;
 use crate::error_enum_or_value;
 use crate::types::HydraHarpError::*;
