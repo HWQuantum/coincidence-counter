@@ -14,7 +14,6 @@ where
     }
 }
 
-
 #[pyfunction]
 pub fn open_device(id: i32) -> PyResult<Device> {
     convert_hydra_harp_result(Device::open_device(id))
@@ -59,59 +58,25 @@ pub fn set_sync_CFD(d: &mut Device, level: i32, zerox: i32) -> PyResult<()> {
     convert_hydra_harp_result(d.set_sync_CFD(level, zerox))
 }
 
-// /// Set the sync timing offset in ps
-// /// minimum is CHANOFFSMIN, maximum is CHANOFFSMAX
-// pub fn set_sync_channel_offset(&mut self, offset: i32) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetSyncChannelOffset(self.id, offset)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_sync_channel_offset(d: &mut Device, offset: i32) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_sync_channel_offset(offset))
+}
 
-// /// Modify the input CFD. Bounds are the same as the `set_sync_CFD`
-// pub fn set_input_CFD(
-//     &mut self,
-//     channel: i32,
-//     level: i32,
-//     zerox: i32,
-// ) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetInputCFD(self.id, channel, level, zerox)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_input_CFD(d: &mut Device, channel: i32, level: i32, zerox: i32) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_input_CFD(channel, level, zerox))
+}
 
-// /// Set the timing offset on the given channel in picoseconds
-// pub fn set_input_channel_offset(
-//     &mut self,
-//     channel: i32,
-//     offset: i32,
-// ) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetInputChannelOffset(self.id, channel, offset)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_input_channel_offset(d: &mut Device, channel: i32, offset: i32) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_input_channel_offset(channel, offset))
+}
 
-// /// Set the enabled state of the given channel
-// pub fn set_input_channel_enabled(
-//     &mut self,
-//     channel: i32,
-//     enabled: bool,
-// ) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetInputChannelEnable(self.id, channel, enabled as i32)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_input_channel_enabled(d: &mut Device, channel: i32, enabled: bool) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_input_channel_enabled(channel, enabled))
+}
 
 // /// This setting determines if a measurement run will stop if any channel reaches the maximum set by `stopcount`.
 // /// If `stop_ofl` is `false` the measurement will continue, but counts above `STOPCNTMAX` in any bin will be clipped.
@@ -166,15 +131,11 @@ pub fn set_sync_CFD(d: &mut Device, level: i32, zerox: i32) -> PyResult<()> {
 //     return_val
 // }
 
-// /// Clear the histogram memory
-// pub fn clear_histogram_memory(&mut self) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_ClearHistMem(self.id)
-//         },
-//         ()
-//     }
-// }
+/// Clear the histogram memory
+#[pyfunction]
+pub fn clear_histogram_memory(d: &mut Device) -> PyResult<()> {
+    convert_hydra_harp_result(d.clear_histogram_memory())
+}
 
 // /// Set the measurement control code and edges
 // pub fn set_measurement_control(
@@ -193,37 +154,24 @@ pub fn set_sync_CFD(d: &mut Device, level: i32, zerox: i32) -> PyResult<()> {
 //     }
 // }
 
-// /// Start a measurement with acquisition time in milliseconds
-// pub fn start_measurement(&mut self, acquisition_time: i32) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_StartMeas(self.id, acquisition_time)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn start_measurement(d: &mut Device, acquisition_time: i32) -> PyResult<()> {
+    convert_hydra_harp_result(d.start_measurement(acquisition_time))
+}
 
-// /// Stop a measurement. Can be used before the acquisition time expires
-// pub fn stop_measurement(&mut self) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_StopMeas(self.id)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn stop_measurement(d: &mut Device) -> PyResult<()> {
+    convert_hydra_harp_result(d.stop_measurement())
+}
 
-// /// Get the status of the device, whether the acquisiton time is still going, or if it has ended.
-// pub fn get_CTC_status(&self) -> Result<CTCStatus, HydraHarpError> {
-//     let mut status: i32 = 0;
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_CTCStatus(self.id, &mut status as *mut i32)
-//         },
-//         num::FromPrimitive::from_i32(status).unwrap()
-//     }
-// }
-
+#[pyfunction]
+pub fn get_CTC_status(d: &mut Device) -> PyResult<i32> {
+    match convert_hydra_harp_result(d.get_CTC_status()) {
+        Ok(x) => Ok(num::ToPrimitive::to_i32(&x).unwrap()),
+        Err(e) => Err(e),
+    }
+}
+        
 // /// Get the histogram from the device. Returns the error `HistogramLengthNotKnown` if
 // /// `self.histogram_length = None`. If clear is true then the acquisiton buffer is cleared upon reading,
 // /// otherwise it isn't
@@ -242,27 +190,15 @@ pub fn set_sync_CFD(d: &mut Device, level: i32, zerox: i32) -> PyResult<()> {
 //     }
 // }
 
-// /// get the resolution at the current histogram bin width in picoseconds
-// pub fn get_resolution(&self) -> Result<f64, HydraHarpError> {
-//     let mut resolution: f64 = 0.0;
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_GetResolution(self.id, &mut resolution as *mut f64)
-//         },
-//         resolution
-//     }
-// }
+#[pyfunction]
+pub fn get_resolution(d: &mut Device) -> PyResult<f64> {
+    convert_hydra_harp_result(d.get_resolution)
+}
 
-// /// get the current sync rate
-// pub fn get_sync_rate(&self) -> Result<i32, HydraHarpError> {
-//     let mut sync_rate: i32 = 0;
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_GetSyncRate(self.id, &mut sync_rate as *mut i32)
-//         },
-//         sync_rate
-//     }
-// }
+#[pyfunction]
+pub fn get_sync_rate(d: &mut Device) -> PyResult<i32> {
+    convert_hydra_harp_result(d.get_sync_rate())
+}
 
 // /// get the current count rate
 // /// allow at least 100ms after initialise or set_sync_divider to get a stable meter reading
@@ -388,5 +324,15 @@ fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(get_number_of_input_channels))?;
     m.add_wrapped(wrap_pyfunction!(calibrate))?;
     m.add_wrapped(wrap_pyfunction!(set_sync_divider))?;
+    m.add_wrapped(wrap_pyfunction!(set_sync_channel_offset))?;
+    m.add_wrapped(wrap_pyfunction!(set_input_CFD))?;
+    m.add_wrapped(wrap_pyfunction!(set_input_channel_offset))?;
+    m.add_wrapped(wrap_pyfunction!(set_input_channel_enabled))?;
+    m.add_wrapped(wrap_pyfunction!(clear_histogram_memory))?;
+    m.add_wrapped(wrap_pyfunction!(start_measurement))?;
+    m.add_wrapped(wrap_pyfunction!(stop_measurement))?;
+    m.add_wrapped(wrap_pyfunction!(get_CTC_status))?;
+    m.add_wrapped(wrap_pyfunction!(get_resolution))?;
+    m.add_wrapped(wrap_pyfunction!(get_sync_rate))?;
     Ok(())
 }
