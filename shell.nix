@@ -9,8 +9,8 @@ in
 
 
 	  buildInputs = [
-	    rustChannels.nightly.rust
-	    rustChannels.nightly.cargo
+      (rustChannelOf { date = "2019-06-21"; channel = "nightly"; }).rust
+      (rustChannelOf { date = "2019-06-21"; channel = "nightly"; }).cargo
 	    llvmPackages.libclang
       	    hharp
 	    (python3.withPackages(ps: with ps; [ pyqtgraph pyqt5 ]))
