@@ -17,7 +17,7 @@ class MeasurementThread(QObject):
     @pyqtSlot()
     def run_measurement(self):
         sleep(self.time)
-        self.measurement_done.emit(np.random.randint(0, 10, 10))
+        self.measurement_done.emit(np.random.randint(0, 10, (100, 2)))
 
 
 class MainWindow(QWidget):
@@ -25,7 +25,7 @@ class MainWindow(QWidget):
         super().__init__()
         vbox = QVBoxLayout()
         self.sbox = QSpinBox()
-        self.long_button = QPushButton("Do long sleep")
+        self.long_button = QPushButton("Measure")
         self.long_button.setCheckable(True)
         self.measurement_thread = QThread()
         self.long_button.clicked.connect(self.run_measurement)
@@ -45,9 +45,9 @@ class MainWindow(QWidget):
         if self.long_button.isChecked() and not self.measurement_thread.isRunning():
             self.measurement = MeasurementThread(self.sbox.value(), 1)
             self.measurement.measurement_done.connect(self.long_sleep)
-            self.measurement.measurement_done.connect(self.run_measurement)
             self.measurement.moveToThread(self.measurement_thread)
             self.measurement_thread.started.connect(self.measurement.run_measurement)
+            self.measurement_thread.finished.connect(self.run_measurement)
             self.measurement.measurement_done.connect(self.measurement_thread.quit)
             self.measurement_thread.start()
 
