@@ -81,43 +81,20 @@ pub fn set_input_channel_enabled(d: &mut Device, channel: i32, enabled: bool) ->
     convert_hydra_harp_result(d.set_input_channel_enabled(channel, enabled))
 }
 
-// /// This setting determines if a measurement run will stop if any channel reaches the maximum set by `stopcount`.
-// /// If `stop_ofl` is `false` the measurement will continue, but counts above `STOPCNTMAX` in any bin will be clipped.
-// pub fn set_stop_overflow(
-//     &mut self,
-//     stop_ofl: bool,
-//     stopcount: u32,
-// ) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetStopOverflow(self.id, stop_ofl as i32, stopcount)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_stop_overflow(d: &mut Device, stop_ofl: bool, stopcount: u32) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_stop_overflow(stop_ofl, stopcount))
+}
 
-// /// Set the binning. The binning value corresponds to powers of 2*the base resolution.
-// /// eg: `binning = 0 => 1*base_resolution`
-// ///     `binning = 1 => 2*base_resolution`
-// ///     `binning = 2 => 4*base_resolution`
-// pub fn set_binning(&mut self, binning: i32) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetBinning(self.id, binning)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_binning(d: &mut Device, binning: i32) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_binning(binning))
+}
 
-// /// Set the histogram time offset in nanoseconds
-// pub fn set_offset(&mut self, offset: i32) -> Result<(), HydraHarpError> {
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_SetOffset(self.id, offset)
-//         },
-//         ()
-//     }
-// }
+#[pyfunction]
+pub fn set_offset(d: &mut Device, offset: i32) -> PyResult<()> {
+    convert_hydra_harp_result(d.set_offset(offset))
+}
 
 // /// Set the histogram length. Returns the actual length calculated as `1024*(2^lencode)`
 // pub fn set_histogram_length(&mut self, length: i32) -> Result<i32, HydraHarpError> {
@@ -432,6 +409,9 @@ fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(set_input_CFD))?;
     m.add_wrapped(wrap_pyfunction!(set_input_channel_offset))?;
     m.add_wrapped(wrap_pyfunction!(set_input_channel_enabled))?;
+    m.add_wrapped(wrap_pyfunction!(set_stop_overflow))?;
+    m.add_wrapped(wrap_pyfunction!(set_binning))?;
+    m.add_wrapped(wrap_pyfunction!(set_offset))?;
     m.add_wrapped(wrap_pyfunction!(clear_histogram_memory))?;
     m.add_wrapped(wrap_pyfunction!(start_measurement))?;
     m.add_wrapped(wrap_pyfunction!(stop_measurement))?;
