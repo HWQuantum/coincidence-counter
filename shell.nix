@@ -13,7 +13,8 @@ in
       (rustChannelOf { date = "2019-06-21"; channel = "nightly"; }).cargo
 	    llvmPackages.libclang
       	    hharp
-	    (python3.withPackages(ps: with ps; [ pyqtgraph pyqt5 ]))
+	    (python3.withPackages(ps: with ps; [ pyqtgraph pyqt5 cython ]))
+	    xorg.libxcb.dev
 	  ];
     LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
     LD_LIBRARY_PATH = "${hharp}/lib";

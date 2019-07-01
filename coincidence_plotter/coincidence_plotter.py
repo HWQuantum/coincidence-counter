@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxLayout, QTabWidget, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxLayout, QTabWidget, QPushButton, QGridLayout, QDoubleSpinBox, QGroupBox, QLabel
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 import pyqtgraph as pg
 import sys
@@ -19,6 +19,34 @@ class MeasurementThread(QObject):
         sleep(self.time)
         self.measurement_done.emit(np.random.randint(0, 10, (100, 2)))
 
+class PhasePatternController(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QGridLayout()
+        self.amplitude = QDoubleSpinBox()
+        self.amplitude.setRange(-1000, 1000)
+        self.l_value = QSpinBox()
+        self.k = XYController("Hello")
+
+        self.layout.addWidget(self.amplitude, 0, 0, 2, 2)
+        self.layout.addWidget(self.l_value, 2, 0)
+        self.layout.addWidget(self.k, 3, 0)
+        self.setLayout(self.layout)
+
+class XYController(QGroupBox):
+    def __init__(self, name, xRange = (-10_000, 10_000), yRange=(-10_000, 10_000)):
+        super().__init__()
+        self.setTitle(name)
+        self.layout = QGridLayout()
+        self.x = QDoubleSpinBox()
+        self.x.setRange(*xRange)
+        self.y = QDoubleSpinBox()
+        self.layout.addWidget(QLabel("x:"), 0, 0)
+        self.layout.addWidget(QLabel("y:"), 0, 5)
+        self.layout.addWidget(self.x, 0, 1, 1, 4)
+        self.layout.addWidget(self.y, 0, 6, 1, 4)
+        self.setLayout(self.layout)
+
 
 class MainWindow(QWidget):
     def __init__(self, parent=None):
@@ -32,11 +60,13 @@ class MainWindow(QWidget):
         self.graph = pg.PlotWidget()
         self.setLayout(vbox)
         self.curve = self.graph.plot([0, 0, 0])
+        self.im = pg.ImageView()
+        self.im.setImage(np.random.randint(0, 10, (100, 100)))
         vbox.addWidget(self.sbox)
         vbox.addWidget(self.long_button)
         vbox.addWidget(self.graph)
-        self.timer = QTimer()
-        self.show()
+        vbox.addWidget(self.im)
+        vbox.addWidget(PhasePatternController())
 
     def long_sleep(self, data):
         self.curve.setData(data)
@@ -53,5 +83,7 @@ class MainWindow(QWidget):
 
 if __name__ =='__main__':
     app = QApplication(sys.argv)
+    print(app.screens()[1].geometry())
     window = MainWindow()
+    window.show()
     sys.exit(app.exec_())
