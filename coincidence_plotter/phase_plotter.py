@@ -2,7 +2,9 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxL
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 import pyqtgraph as pg
 import numpy as np
+from numba import jit, njit
 
+@njit()
 def generate_pattern(x, y, n, k_vec, phase=0, centre=(0, 0)):
     return np.exp(1j*(n*np.arctan2(y-centre[1], x-centre[0])+
                       (k_vec[0]*x + k_vec[1]*y)+
