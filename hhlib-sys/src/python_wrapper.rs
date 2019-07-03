@@ -378,21 +378,24 @@ pub fn measure_and_get_counts(
     acquisition_time: i32,
     coincidence_window: u64,
 ) -> PyResult<(Vec<u64>, Vec<u64>)> {
-    convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
-    sleep(Duration::from_millis(acquisition_time as u64));
-    while convert_hydra_harp_result(d.get_CTC_status())? == crate::types::CTCStatus::Running {
-        sleep(Duration::from_millis(1));
-    }
     let buffer_length = 131072;
     let mut buffer = vec![0u32; buffer_length];
-    let num_read =
-        convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;
     let mut measurement = Measurement::new(0);
-    let mut channel_times = measurement.convert_values_T2(&buffer[..num_read]);
+    let mut channel_times = Vec::with_capacity(buffer_length);
+    convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
+    loop {
+        let num_read =
+            convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;
+        channel_times.append(&mut measurement.convert_values_T2(&buffer[..num_read]));
+        if convert_hydra_harp_result(d.get_CTC_status())? == crate::types::CTCStatus::Ended {
+            break;
+        }
+    }
     channel_times.sort_by_key(|(_, t)| *t);
-    let (singles, coincidences) =
-        crate::singles_and_two_way_coincidences(coincidence_window, &channel_times);
-    Ok((singles.to_vec(), coincidences.to_vec()))
+    // let (singles, coincidences) =
+    //     crate::singles_and_two_way_coincidences(coincidence_window, &channel_times);
+    // Ok((singles.to_vec(), coincidences.to_vec()))
+    Ok((vec![0, 0], vec![0]))
 }
 
 #[pymodule]
