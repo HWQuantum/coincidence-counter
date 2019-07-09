@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxLayout, QTabWidget, QPushButton, QGridLayout, QDoubleSpinBox, QGroupBox, QLabel, QApplication
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxLayout, QTabWidget, QPushButton, QGridLayout, QDoubleSpinBox, QGroupBox, QLabel, QApplication, QFormLayout, QScrollArea
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 import pyqtgraph as pg
 import numpy as np
 from numba import jit, njit
 import sys
+
 
 @njit()
 def generate_pattern(x, y, n, k_vec, phase=0, centre=(0, 0)):
@@ -40,7 +41,7 @@ class PhasePatternController(QGroupBox):
 
     def __init__(self):
         super().__init__()
-        self.setTitle("Phase Values")
+        self.setTitle("Phase Pattern")
         self.layout = QGridLayout()
 
         self.amplitude = pg.SpinBox(value=1.0)
@@ -75,27 +76,67 @@ class PhasePatternController(QGroupBox):
         ]
 
 
+class CloseWrapper(QWidget):
+    close = pyqtSignal()
+
+    def __init__(self, other_widget):
+        super().__init__()
+        layout = QHBoxLayout()
+        layout.addWidget(other_widget, 4)
+        closer = QPushButton("Close")
+        self.wrapped_widget = other_widget
+        closer.clicked.connect(self.close.emit)
+        layout.addWidget(closer, 1)
+        self.setLayout(layout)
+
+
 class PhasePatternSet(QWidget):
     value_changed = pyqtSignal()
 
     def __init__(self):
         super().__init__()
-        self.tabs = QTabWidget()
-        self.tabs.setTabsClosable(True)
-        self.tabs.setTabBarAutoHide(True)
-        self.tabs.tabCloseRequested.connect(self.remove_tab)
-        self.add_button = QPushButton("Add phase pattern")
-        self.add_button.clicked.connect(self.add_pattern)
-        self.layout = QGridLayout()
-        self.layout.addWidget(self.add_button, 0, 3, 1, 1)
-        self.layout.addWidget(self.tabs, 1, 0, 4, 4)
+        self.layout = QFormLayout()
         self.setLayout(self.layout)
 
-    def add_pattern(self):
-        pControl = PhasePatternController()
-        pControl.value_changed.connect(self.value_changed.emit)
-        self.tabs.addTab(pControl, "Phase Pattern")
+    @pyqtSlot()
+    def add_new_phase_pattern(self):
+        controller = PhasePatternController()
+        controller.value_changed.connect(self.value_changed.emit)
+        new_phase_pattern = CloseWrapper(controller)
+        new_phase_pattern.close.connect(lambda: self.remove_pattern(new_phase_pattern))
+        self.layout.addRow(new_phase_pattern)
         self.value_changed.emit()
+
+    def get_values(self):
+        return [
+            self.layout.itemAt(i).widget().wrapped_widget.get_values()
+            for i in range(self.layout.count())
+        ]
+
+    def remove_pattern(self, pattern):
+        self.layout.removeRow(pattern)
+        self.value_changed.emit()
+
+
+class PhasePatternSetController(QWidget):
+    value_changed = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.pattern_set = PhasePatternSet()
+        self.pattern_set.value_changed.connect(self.value_changed.emit)
+        self.scroller = QScrollArea()
+        self.scroller.setWidget(self.pattern_set)
+        self.scroller.setWidgetResizable(True)
+        self.add_button = QPushButton("Add phase pattern")
+        self.update_button = QPushButton("Update phase pattern")
+        self.add_button.clicked.connect(self.pattern_set.add_new_phase_pattern)
+        self.update_button.clicked.connect(self.value_changed.emit)
+        self.layout = QGridLayout()
+        self.layout.addWidget(self.add_button, 0, 2, 1, 1)
+        self.layout.addWidget(self.update_button, 0, 3, 1, 1)
+        self.layout.addWidget(self.scroller, 1, 0, 4, 4)
+        self.setLayout(self.layout)
 
     @pyqtSlot(int)
     def remove_tab(self, i):
@@ -103,9 +144,7 @@ class PhasePatternSet(QWidget):
         self.value_changed.emit()
 
     def get_values(self):
-        return [
-            self.tabs.widget(i).get_values() for i in range(self.tabs.count())
-        ]
+        return self.pattern_set.get_values()
 
 
 class SLMControllerWidget(QWidget):
@@ -114,7 +153,7 @@ class SLMControllerWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.layout = QGridLayout()
+        self.layout = QHBoxLayout()
         self.setLayout(self.layout)
         self.plot = pg.PlotWidget()
         self.plot.setLimits(xMin=0,
@@ -130,10 +169,10 @@ class SLMControllerWidget(QWidget):
         self.image = np.zeros((1920, 1080))
         self.image_display = pg.ImageItem(self.image)
         self.plot.addItem(self.image_display)
-        self.layout.addWidget(self.plot, 0, 0)
-        self.phase_patterns = PhasePatternSet()
+        self.layout.addWidget(self.plot, 1)
+        self.phase_patterns = PhasePatternSetController()
         self.phase_patterns.value_changed.connect(self.queue_pattern)
-        self.layout.addWidget(self.phase_patterns, 0, 1)
+        self.layout.addWidget(self.phase_patterns, 2)
         self.calculation_thread = QThread()
         self.calculation_thread.finished.connect(self.plot_patterns)
         # for threading the phase patterns
