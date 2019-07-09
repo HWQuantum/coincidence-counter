@@ -1,20 +1,26 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxLayout, QTabWidget, QPushButton, QGridLayout, QDoubleSpinBox, QGroupBox, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QApplication, QHBoxLayout, QTabWidget, QPushButton, QGridLayout, QDoubleSpinBox, QGroupBox, QLabel, QApplication
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 import pyqtgraph as pg
 import numpy as np
 from numba import jit, njit
+import sys
 
 @njit()
 def generate_pattern(x, y, n, k_vec, phase=0, centre=(0, 0)):
-    return np.exp(1j*(n*np.arctan2(y-centre[1], x-centre[0])+
-                      (k_vec[0]*x + k_vec[1]*y)+
-                      phase))
+    return np.exp(1j * (n * np.arctan2(y - centre[1], x - centre[0]) +
+                        (k_vec[0] * x + k_vec[1] * y) + phase))
+
 
 def combine_patterns(x, y, pattern_arguments):
     if len(pattern_arguments) == 0:
         return np.zeros(x.shape)
     else:
-        return np.angle(np.sum([a*generate_pattern(x, y, n, k, p, centre) for (a, n, k, p, centre) in pattern_arguments], axis=0))
+        return np.angle(
+            np.sum([
+                a * generate_pattern(x, y, n, k, p, centre)
+                for (a, n, k, p, centre) in pattern_arguments
+            ],
+                   axis=0))
 
 
 class PatternThread(QObject):
@@ -31,7 +37,7 @@ class PatternThread(QObject):
 
 class PhasePatternController(QGroupBox):
     value_changed = pyqtSignal()
-    
+
     def __init__(self):
         super().__init__()
         self.setTitle("Phase Values")
@@ -68,9 +74,10 @@ class PhasePatternController(QGroupBox):
             self.pos.get_values()
         ]
 
+
 class PhasePatternSet(QWidget):
     value_changed = pyqtSignal()
-    
+
     def __init__(self):
         super().__init__()
         self.tabs = QTabWidget()
@@ -96,7 +103,9 @@ class PhasePatternSet(QWidget):
         self.value_changed.emit()
 
     def get_values(self):
-        return [self.tabs.widget(i).get_values() for i in range(self.tabs.count())]
+        return [
+            self.tabs.widget(i).get_values() for i in range(self.tabs.count())
+        ]
 
 
 class SLMControllerWidget(QWidget):
@@ -134,11 +143,14 @@ class SLMControllerWidget(QWidget):
     def plot_patterns(self):
         if self.queued:
             self.queued = False
-            self.calculation = PatternThread((self.X, self.Y, self.phase_patterns.get_values()))
+            self.calculation = PatternThread(
+                (self.X, self.Y, self.phase_patterns.get_values()))
             self.calculation.pattern_generated.connect(self.display_pattern)
             self.calculation.moveToThread(self.calculation_thread)
-            self.calculation_thread.started.connect(self.calculation.run_calculation)
-            self.calculation.pattern_generated.connect(self.calculation_thread.quit)
+            self.calculation_thread.started.connect(
+                self.calculation.run_calculation)
+            self.calculation.pattern_generated.connect(
+                self.calculation_thread.quit)
             self.calculation_thread.start()
 
     @pyqtSlot()
@@ -151,11 +163,11 @@ class SLMControllerWidget(QWidget):
         self.image = im
         self.image_display.setImage(self.image)
 
+
 class XYController(QGroupBox):
     value_changed = pyqtSignal()
 
-    def __init__(self,
-                 name):
+    def __init__(self, name):
         super().__init__()
         self.setTitle(name)
         self.layout = QGridLayout()
@@ -171,3 +183,10 @@ class XYController(QGroupBox):
 
     def get_values(self):
         return (self.x.value(), self.y.value())
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = SLMControllerWidget()
+    window.show()
+    sys.exit(app.exec_())
