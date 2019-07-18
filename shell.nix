@@ -3,6 +3,7 @@ let
 in
     with import <nixpkgs> { overlays = [ moz_overlay ]; };
     let hharp = callPackage ./hydraHarpLib.nix {};
+        opticspy = callPackage ./opticspy.nix {};
   in
 	stdenv.mkDerivation {
 	  name = "rust-env";
@@ -13,7 +14,7 @@ in
       (rustChannelOf { date = "2019-06-21"; channel = "nightly"; }).cargo
 	    llvmPackages.libclang
       	    hharp
-	    (python3.withPackages(ps: with ps; [ pyqtgraph pyqt5 cython numba matplotlib numpy ]))
+	    (python3.withPackages(ps: with ps; [ pyqtgraph pyqt5 cython numba matplotlib numpy opticspy ]))
 	    xorg.libxcb.dev
 	  ];
     LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
