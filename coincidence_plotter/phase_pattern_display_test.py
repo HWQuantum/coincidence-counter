@@ -5,7 +5,8 @@ import numpy as np
 import sys
 from phase_plotter import combine_patterns, PhasePatternController
 
-X, Y = np.meshgrid(np.linspace(-1*(1024/1280), 1*(1024/1280), 1024), np.linspace(-1, 1, 1280))
+X, Y = np.meshgrid(np.linspace(-1 * (1024 / 1280), 1 * (1024 / 1280), 1024),
+                   np.linspace(-1, 1, 1280))
 
 
 class MainWindow(QWidget):
@@ -22,8 +23,10 @@ class MainWindow(QWidget):
         self.little_plot = FullScreenPlot()
         self.gradient_editor = pg.GradientWidget()
         self.gradient_editor.loadPreset('grey')
-        self.gradient_editor.sigGradientChangeFinished.connect(lambda s: self.fs_plot.update_LUT(s.getLookupTable(256)))
-        self.gradient_editor.sigGradientChangeFinished.connect(lambda s: self.little_plot.update_LUT(s.getLookupTable(256)))
+        self.gradient_editor.sigGradientChangeFinished.connect(
+            lambda s: self.fs_plot.update_LUT(s.getLookupTable(256)))
+        self.gradient_editor.sigGradientChangeFinished.connect(
+            lambda s: self.little_plot.update_LUT(s.getLookupTable(256)))
         layout.addWidget(self.phase_controller)
         layout.addWidget(self.little_plot)
         layout.addWidget(self.gradient_editor)
@@ -42,6 +45,7 @@ class MainWindow(QWidget):
 
 
 class FullScreenPlot(pg.PlotWidget):
+    ### displays an ndarray on a pyqtgraph image plot
     def __init__(self):
         super().__init__()
         self.setLimits(xMin=0,
