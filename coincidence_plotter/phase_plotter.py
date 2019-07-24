@@ -24,6 +24,17 @@ def combine_patterns(x, y, pattern_arguments):
                    axis=0))
 
 
+def combine_patterns_no_angle(x, y, pattern_arguments):
+    if len(pattern_arguments) == 0:
+        return np.zeros(x.shape)
+    else:
+        return np.sum([
+            a * generate_pattern(x, y, n, k, p, centre)
+            for (a, n, k, p, centre) in pattern_arguments
+        ],
+                      axis=0)
+
+
 class PatternThread(QObject):
     pattern_generated = pyqtSignal(np.ndarray)
 
@@ -103,7 +114,8 @@ class PhasePatternSet(QWidget):
         controller = PhasePatternController()
         controller.value_changed.connect(self.value_changed.emit)
         new_phase_pattern = CloseWrapper(controller)
-        new_phase_pattern.close.connect(lambda: self.remove_pattern(new_phase_pattern))
+        new_phase_pattern.close.connect(
+            lambda: self.remove_pattern(new_phase_pattern))
         self.layout.addRow(new_phase_pattern)
         self.value_changed.emit()
 
