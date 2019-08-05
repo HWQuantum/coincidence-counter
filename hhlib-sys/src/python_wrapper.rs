@@ -4,6 +4,7 @@ use crate::types::convert_hydra_harp_result;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
+use std::collections::VecDeque;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -377,25 +378,51 @@ pub fn measure_and_get_counts(
     d: &mut Device,
     acquisition_time: i32,
     coincidence_window: u64,
-) -> PyResult<(Vec<u64>, Vec<u64>)> {
-    let buffer_length = 131072;
-    let mut buffer = vec![0u32; buffer_length];
+    sync_channel: u8,
+) -> PyResult<(Vec<usize>, Vec<usize>)> {
+    const buffer_length: usize = 131072;
+    let mut buffer: [u32; buffer_length] = [0u32; buffer_length];
     let mut measurement = Measurement::new(0);
-    let mut channel_times = Vec::with_capacity(buffer_length);
+    let mut sync_buffer: VecDeque<u64> = VecDeque::with_capacity(buffer_length);
     convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
+    let mut singles = [0usize; 8];
+    let mut coincidences = [0usize; 8];
     loop {
         let num_read =
             convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;
-        channel_times.append(&mut measurement.convert_values_T2(&buffer[..num_read]));
-        if convert_hydra_harp_result(d.get_CTC_status())? == crate::types::CTCStatus::Ended {
-            break;
+        if num_read > 0 {
+            let mut channel_times = measurement.convert_values_T2(&buffer[..num_read]);
+            channel_times.sort_by_key(|(_, t)| *t);
+            for &(channel, time) in channel_times.iter() {
+                singles[channel as usize] += 1;
+                if channel == sync_channel {
+                    sync_buffer.push_back(time)
+                } else {
+                    let mut remove_index = None; // Index of sync channel counts that are out of the coincidence window, to be removed
+                    for (i, sync_time) in sync_buffer.iter().enumerate() {
+                        let delta_t = time - sync_time;
+                        if delta_t > coincidence_window {
+                            remove_index = Some(i);
+                        } else {
+                            // we have a coincidence - add to the coincidences
+                            coincidences[i as usize] += 1;
+                        }
+                    }
+                    // TODO maybe only remove the last element of the vecdeque
+                    // each time round the measurement loop
+                    // it could be too slow this way...
+                    if let Some(i) = remove_index {
+                        sync_buffer.drain(0..i);
+                    }
+                }
+            }
+        } else {
+            if convert_hydra_harp_result(d.get_CTC_status())? == crate::types::CTCStatus::Ended {
+                break;
+            }
         }
     }
-    channel_times.sort_by_key(|(_, t)| *t);
-    // let (singles, coincidences) =
-    //     crate::singles_and_two_way_coincidences(coincidence_window, &channel_times);
-    // Ok((singles.to_vec(), coincidences.to_vec()))
-    Ok((vec![0, 0], vec![0]))
+    Ok((singles.to_vec(), coincidences.to_vec()))
 }
 
 #[pymodule]
