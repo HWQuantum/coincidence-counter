@@ -1,5 +1,5 @@
 use crate::device::Device;
-use crate::measurement::Measurement;
+use crate::measurement::{Measurement, Measureable};
 use crate::types::convert_hydra_harp_result;
 use pyo3::exceptions;
 use pyo3::prelude::*;

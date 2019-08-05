@@ -8,6 +8,7 @@ use crate::types::HydraHarpError::*;
 use crate::types::{
     CTCStatus, EdgeSelection, HydraHarpError, MeasurementControl, MeasurementMode, ReferenceSource,
 };
+use crate::measurement::Measureable;
 
 /// Contains the information of the device - the number it is (0 -> 7) and the serial of it.
 #[pyclass]
@@ -252,15 +253,6 @@ impl Device {
         }
     }
 
-    /// Start a measurement with acquisition time in milliseconds
-    pub fn start_measurement(&mut self, acquisition_time: i32) -> Result<(), HydraHarpError> {
-        error_enum_or_value! {
-            unsafe {
-                HH_StartMeas(self.id, acquisition_time)
-            },
-            ()
-        }
-    }
 
     /// Stop a measurement. Can be used before the acquisition time expires
     pub fn stop_measurement(&mut self) -> Result<(), HydraHarpError> {
@@ -272,16 +264,6 @@ impl Device {
         }
     }
 
-    /// Get the status of the device, whether the acquisiton time is still going, or if it has ended.
-    pub fn get_CTC_status(&self) -> Result<CTCStatus, HydraHarpError> {
-        let mut status: i32 = 0;
-        error_enum_or_value! {
-            unsafe {
-                HH_CTCStatus(self.id, &mut status as *mut i32)
-            },
-            num::FromPrimitive::from_i32(status).unwrap()
-        }
-    }
 
     /// Get the histogram from the device. Returns the error `HistogramLengthNotKnown` if
     /// `self.histogram_length = None`. If clear is true then the acquisiton buffer is cleared upon reading,
@@ -369,26 +351,6 @@ impl Device {
         }
     }
 
-    /// use in TTTR mode
-    /// `buffer` should be at least 128 records long
-    /// `records_to_fetch` should be a multiple of 128, less than the length of `buffer` and no longer than `TTREADMAX`
-    /// In the result, returns Ok(records_written), where records_written is the number of records actually written to the buffer
-    pub fn read_fifo(
-        &mut self,
-        buffer: &mut Vec<u32>,
-        records_to_fetch: i32,
-    ) -> Result<i32, HydraHarpError> {
-        let mut records_written: i32 = 0;
-        error_enum_or_value! {
-            unsafe {
-                HH_ReadFiFo(
-                    self.id, buffer.as_mut_ptr(), records_to_fetch,
-                    &mut records_written as *mut i32
-                    )
-            },
-            records_written
-        }
-    }
 
     /// Use in TTTR mode
     /// set the marker edges
@@ -442,5 +404,49 @@ impl Device {
 impl Drop for Device {
     fn drop(&mut self) {
         self.close_device();
+    }
+}
+
+impl Measureable for Device {
+    /// Start a measurement with acquisition time in milliseconds
+    fn start_measurement(&mut self, acquisition_time: i32) -> Result<(), HydraHarpError> {
+        error_enum_or_value! {
+            unsafe {
+                HH_StartMeas(self.id, acquisition_time)
+            },
+            ()
+        }
+    }
+
+    /// use in TTTR mode
+    /// `buffer` should be at least 128 records long
+    /// `records_to_fetch` should be a multiple of 128, less than the length of `buffer` and no longer than `TTREADMAX`
+    /// In the result, returns Ok(records_written), where records_written is the number of records actually written to the buffer
+    fn read_fifo(
+        &mut self,
+        buffer: &mut [u32],
+        records_to_fetch: i32,
+    ) -> Result<i32, HydraHarpError> {
+        let mut records_written: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_ReadFiFo(
+                    self.id, buffer.as_mut_ptr(), records_to_fetch,
+                    &mut records_written as *mut i32
+                    )
+            },
+            records_written
+        }
+    }
+
+    /// Get the status of the device, whether the acquisiton time is still going, or if it has ended.
+    fn get_CTC_status(&self) -> Result<CTCStatus, HydraHarpError> {
+        let mut status: i32 = 0;
+        error_enum_or_value! {
+            unsafe {
+                HH_CTCStatus(self.id, &mut status as *mut i32)
+            },
+            num::FromPrimitive::from_i32(status).unwrap()
+        }
     }
 }

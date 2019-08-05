@@ -3,6 +3,8 @@
 use std::thread;
 use std::time::Duration;
 
+use crate::types::{HydraHarpError, CTCStatus};
+
 const OVERFLOW_PERIOD: u64 = 33554432;
 const OVERFLOW_MASK: u32 = (63 << 25);
 const TIME_MASK: u32 = (1 << 24) - 1;
@@ -53,5 +55,35 @@ impl Measurement {
             }
         }
         times
+    }
+}
+
+pub trait Measureable {
+    fn start_measurement(&mut self, acquisition_time: i32) -> Result<(), HydraHarpError>;
+    fn read_fifo(&mut self, buffer: &mut [u32], records_to_fetch: i32) -> Result<i32, HydraHarpError>;
+    fn get_CTC_status(&self) -> Result<CTCStatus, HydraHarpError>;
+}
+
+pub struct TestMeasureable {
+    time: u64,
+}
+
+impl TestMeasureable {
+    fn new() -> TestMeasureable {
+        TestMeasureable {
+            time: 0
+        }
+    }
+}
+
+impl Measureable for TestMeasureable {
+    fn start_measurement(&mut self, acquisition_time: i32) -> Result<(), HydraHarpError> {
+        Ok(())
+    }
+    fn read_fifo(&mut self, buffer: &mut [u32], records_to_fetch: i32) -> Result<i32, HydraHarpError> {
+        Ok(0)
+    }
+    fn get_CTC_status(&self) -> Result<CTCStatus, HydraHarpError> {
+        Ok(CTCStatus::Ended)
     }
 }
