@@ -1,11 +1,19 @@
 extern crate bindgen;
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn main() {
-    let nix_cflags = env::var("NIX_CFLAGS_COMPILE").unwrap();
-    println!("cargo:rustc-link-lib=hh400");
+
+    let target = env::var("TARGET").unwrap();
+
+    if target.contains("windows") {
+        let lib_dir = Path::new("C:\\Program Files\\PicoQuant\\HydraHarp-HHLibv30");
+        println!("cargo:rustc-link-search={}", &lib_dir.display());
+        println!("cargo:rustc-link-lib=hhlib");
+    } else {
+        println!("cargo:rustc-link-lib=hh400");
+    }
 
     let bindings_partial = bindgen::Builder::default().header("wrapper.h");
     if let Ok(nix_cflags) = env::var("NIX_CFLAGS_COMPILE") {
