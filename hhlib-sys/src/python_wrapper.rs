@@ -1,5 +1,5 @@
 use crate::device::Device;
-use crate::measurement::{Measurement, Measureable};
+use crate::measurement::{Measureable, Measurement};
 use crate::types::convert_hydra_harp_result;
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -365,15 +365,29 @@ fn index_to_coincidence_channels(index: usize) -> (u8, u8) {
     }
 }
 
+/// Helper function to generate a vector of (histogram times, bin indices)
+/// use with if (time < histogram_time): bins[bin_index] += 1
+fn generate_histogram_times(
+    coincidence_window: usize,
+    histogram_bins: usize,
+) -> Vec<(usize, usize)> {
+    let delta = (coincidence_window as f64) / (histogram_bins as f64);
+    (1..=histogram_bins)
+        .map(|x| (((x as f64) * delta).round() as usize, x - 1))
+        .collect()
+}
+
 #[pyfunction]
 /// Make a measurement for `acquisition_time` ms and return a tuple containing
-/// `([singles], [coincidences])`
+/// `([singles], [coincidences], [histograms])`
+/// where [histograms] is a vector containing the histogrammed times
 pub fn measure_and_get_counts(
     d: &mut Device,
     acquisition_time: i32,
     coincidence_window: u64,
+    histogram_bins: usize,
     sync_channel: u8,
-) -> PyResult<(Vec<usize>, Vec<usize>)> {
+) -> PyResult<(Vec<usize>, Vec<usize>, Vec<Vec<usize>>)> {
     const buffer_length: usize = 131072;
     let mut buffer: [u32; buffer_length] = [0u32; buffer_length];
     let mut measurement = Measurement::new(0);
@@ -381,6 +395,8 @@ pub fn measure_and_get_counts(
     convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
     let mut singles = [0usize; 9]; // there are 9 channels on the hydraharp
     let mut coincidences = [0usize; 9]; // likewise
+    let mut histograms = vec![vec![0; histogram_bins]; 9];
+    let histogram_times = generate_histogram_times(coincidence_window as usize, histogram_bins);
     loop {
         let num_read =
             convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;
@@ -400,6 +416,12 @@ pub fn measure_and_get_counts(
                         } else {
                             // we have a coincidence - add to the coincidences
                             coincidences[channel as usize] += 1;
+                            for &(bin_time, bin_index) in histogram_times.iter() {
+                                if delta_t < (bin_time as u64) {
+                                    histograms[channel as usize][bin_index] += 1;
+                                    break
+                                }
+                            }
                         }
                     }
                     // TODO maybe only remove the last element of the vecdeque
@@ -416,7 +438,7 @@ pub fn measure_and_get_counts(
             }
         }
     }
-    Ok((singles.to_vec(), coincidences.to_vec()))
+    Ok((singles.to_vec(), coincidences.to_vec(), histograms))
 }
 
 #[pymodule]
