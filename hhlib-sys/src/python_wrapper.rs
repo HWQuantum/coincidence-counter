@@ -389,27 +389,43 @@ pub fn measure_and_get_counts(
     sync_channel: u8,
 ) -> PyResult<(Vec<usize>, Vec<usize>, Vec<Vec<usize>>)> {
     const buffer_length: usize = 131072;
+
     let mut buffer: [u32; buffer_length] = [0u32; buffer_length];
     let mut measurement = Measurement::new(0);
     let mut sync_buffer: VecDeque<u64> = VecDeque::with_capacity(buffer_length);
-    convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
     let mut singles = [0usize; 9]; // there are 9 channels on the hydraharp
     let mut coincidences = [0usize; 9]; // likewise
     let mut histograms = vec![vec![0; histogram_bins]; 9];
     let histogram_times = generate_histogram_times(coincidence_window as usize, histogram_bins);
+
+    convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
+
     loop {
+        // Read the values
         let num_read =
             convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;
+
+        // If the number of values read is greater than 0, do stuff with them
         if num_read > 0 {
+
+            // Convert the codes into channels and times
             let mut channel_times = measurement.convert_values_T2(&buffer[..num_read]);
+            // Sort by time, just in case
             channel_times.sort_by_key(|(_, t)| *t);
+
             for &(channel, time) in channel_times.iter() {
+
+                // Add to the singles
                 singles[channel as usize] += 1;
+                
                 if channel == sync_channel {
                     sync_buffer.push_back(time)
                 } else {
                     let mut remove_index = None; // Index of sync channel counts that are out of the coincidence window, to be removed
+
+                    // Go through all the times in the sync channel
                     for (i, sync_time) in sync_buffer.iter().enumerate() {
+
                         let delta_t = time - sync_time;
                         if delta_t > coincidence_window {
                             remove_index = Some(i);
@@ -419,7 +435,7 @@ pub fn measure_and_get_counts(
                             for &(bin_time, bin_index) in histogram_times.iter() {
                                 if delta_t < (bin_time as u64) {
                                     histograms[channel as usize][bin_index] += 1;
-                                    break
+                                    break;
                                 }
                             }
                         }
@@ -434,6 +450,7 @@ pub fn measure_and_get_counts(
             }
         } else {
             if convert_hydra_harp_result(d.get_CTC_status())? == crate::types::CTCStatus::Ended {
+                // Our measurement has ended, so get out of the loop
                 break;
             }
         }
