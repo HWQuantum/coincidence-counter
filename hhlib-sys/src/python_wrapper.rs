@@ -181,6 +181,10 @@ pub fn get_sync_rate(d: &mut Device) -> PyResult<i32> {
     convert_hydra_harp_result(d.get_sync_rate())
 }
 
+#[pyfunction]
+pub fn get_count_rate(d: &mut Device, channel: i32) -> PyResult<i32> {
+    convert_hydra_harp_result(d.get_count_rate(channel))
+}
 // /// get the current count rate
 // /// allow at least 100ms after initialise or set_sync_divider to get a stable meter reading
 // /// wait at least 100ms to get a new reading. This is the gate time of the counters
@@ -209,16 +213,6 @@ pub fn get_sync_rate(d: &mut Device) -> PyResult<i32> {
 pub fn get_elapsed_measurement_time(d: &mut Device) -> PyResult<f64> {
     convert_hydra_harp_result(d.get_elapsed_measurement_time())
 }
-// /// get the elapsed measurement time in ms
-// pub fn get_elapsed_measurement_time(&self) -> Result<f64, HydraHarpError> {
-//     let mut time: f64 = 0.0;
-//     error_enum_or_value! {
-//         unsafe {
-//             HH_GetElapsedMeasTime(self.id, &mut time as *mut f64)
-//         },
-//         time
-//     }
-// }
 
 // /// get the warnings encoded bitwise
 // pub fn get_warnings(&self) -> Result<i32, HydraHarpError> {
@@ -405,7 +399,7 @@ pub fn measure_and_get_counts(
                             remove_index = Some(i);
                         } else {
                             // we have a coincidence - add to the coincidences
-                            coincidences[i as usize] += 1;
+                            coincidences[channel as usize] += 1;
                         }
                     }
                     // TODO maybe only remove the last element of the vecdeque
@@ -448,6 +442,7 @@ fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(get_CTC_status))?;
     m.add_wrapped(wrap_pyfunction!(get_resolution))?;
     m.add_wrapped(wrap_pyfunction!(get_sync_rate))?;
+    m.add_wrapped(wrap_pyfunction!(get_count_rate))?;
     m.add_wrapped(wrap_pyfunction!(get_elapsed_measurement_time))?;
     m.add_wrapped(wrap_pyfunction!(measure_and_get_counts))?;
     m.add_wrapped(wrap_pyfunction!(coincidence_channels_to_index))?;
