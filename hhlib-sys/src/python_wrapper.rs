@@ -379,8 +379,8 @@ pub fn measure_and_get_counts(
     let mut measurement = Measurement::new(0);
     let mut sync_buffer: VecDeque<u64> = VecDeque::with_capacity(buffer_length);
     convert_hydra_harp_result(d.start_measurement(acquisition_time))?;
-    let mut singles = [0usize; 8];
-    let mut coincidences = [0usize; 8];
+    let mut singles = [0usize; 9]; // there are 9 channels on the hydraharp
+    let mut coincidences = [0usize; 9]; // likewise
     loop {
         let num_read =
             convert_hydra_harp_result(d.read_fifo(&mut buffer, (buffer_length) as i32))? as usize;

@@ -13,6 +13,8 @@ const TIME_MASK: u32 = (1 << 24) - 1;
 pub enum T2Value {
     /// The u8 is the channel number, the u32 is the time
     Time(u8, u32),
+    /// The u32 is the time
+    Sync(u32),
     Overflow(u32),
     InternalSync(u8),
     ExternalSync(u8),
@@ -25,6 +27,7 @@ pub fn convert_T2_value(v: &u32) -> T2Value {
         0 => Time((v >> 25) as u8 & 63u8, v & TIME_MASK),
         _ => match (v & OVERFLOW_MASK) {
             OVERFLOW_MASK => Overflow(v & ((1 << 24) - 1)),
+            0 => Sync(v & TIME_MASK),
             _ => InternalSync(0),
         },
     }
@@ -44,12 +47,14 @@ impl Measurement {
     }
 
     /// Convert a set of fifo outputs in T2 mode into a vector of channels and times
+    /// Sets the sync channel to index zero and the rest higher
     pub fn convert_values_T2(&mut self, input: &[u32]) -> Vec<(u8, u64)> {
         use crate::measurement::T2Value::*;
         let mut times = Vec::with_capacity(input.len());
         for i in input {
             match convert_T2_value(i) {
-                Time(c, t) => times.push((c, t as u64 + self.time_overflow)),
+                Time(c, t) => times.push((c+1, t as u64 + self.time_overflow)),
+                Sync(t) => times.push((0, t as u64 + self.time_overflow)),
                 Overflow(t) => self.time_overflow += (t as u64) * OVERFLOW_PERIOD,
                 _ => (),
             }
