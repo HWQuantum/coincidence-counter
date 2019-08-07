@@ -28,7 +28,7 @@ fn main() {
     } else {
         let bindings = if target.contains("windows") {
             bindings_partial
-            .clang_args(&[format!("-i{}", &lib_dir.display())])
+            .clang_args(&[format!("-I{}", &lib_dir.display())])
             .generate()
             .expect("Unable to generate bindings")
         } else {
