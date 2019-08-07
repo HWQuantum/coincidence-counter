@@ -424,7 +424,7 @@ pub fn measure_and_get_counts(
                     let mut remove_index = None; // Index of sync channel counts that are out of the coincidence window, to be removed
 
                     // Go through all the times in the sync channel
-                    for (i, sync_time) in sync_buffer.iter().enumerate() {
+                    for (i, &sync_time) in sync_buffer.iter().enumerate() {
 
                         // This 'if' should resolve the error where a time is less than sync time
                         if time > sync_time {
