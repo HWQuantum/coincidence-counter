@@ -377,7 +377,6 @@ fn generate_histogram_times(
         .collect()
 }
 
-#[pyfunction]
 /// Make a measurement for `acquisition_time` ms and return a tuple containing
 /// `([singles], [coincidences], [histograms])`
 /// where [histograms] is a vector containing the histogrammed times
@@ -407,17 +406,15 @@ pub fn measure_and_get_counts(
 
         // If the number of values read is greater than 0, do stuff with them
         if num_read > 0 {
-
             // Convert the codes into channels and times
             let mut channel_times = measurement.convert_values_T2(&buffer[..num_read]);
             // Sort by time, just in case
             channel_times.sort_by_key(|(_, t)| *t);
 
             for &(channel, time) in channel_times.iter() {
-
                 // Add to the singles
                 singles[channel as usize] += 1;
-                
+
                 if channel == sync_channel {
                     sync_buffer.push_back(time)
                 } else {
@@ -425,7 +422,6 @@ pub fn measure_and_get_counts(
 
                     // Go through all the times in the sync channel
                     for (i, &sync_time) in sync_buffer.iter().enumerate() {
-
                         // This 'if' should resolve the error where a time is less than sync time
                         if time > sync_time {
                             let delta_t = time - sync_time;
@@ -486,8 +482,27 @@ fn hhlib_sys(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(get_sync_rate))?;
     m.add_wrapped(wrap_pyfunction!(get_count_rate))?;
     m.add_wrapped(wrap_pyfunction!(get_elapsed_measurement_time))?;
-    m.add_wrapped(wrap_pyfunction!(measure_and_get_counts))?;
+    //m.add_wrapped(wrap_pyfunction!(measure_and_get_counts))?;
     m.add_wrapped(wrap_pyfunction!(coincidence_channels_to_index))?;
     m.add_wrapped(wrap_pyfunction!(index_to_coincidence_channels))?;
+    #[pyfn(m, "measure_and_get_counts")]
+    fn measure_and_get_counts_py(
+        py: Python,
+        d: &mut Device,
+        acquisition_time: i32,
+        coincidence_window: u64,
+        histogram_bins: usize,
+        sync_channel: u8,
+    ) -> PyResult<(Vec<usize>, Vec<usize>, Vec<Vec<usize>>)> {
+        py.allow_threads(move || {
+            measure_and_get_counts(
+                d,
+                acquisition_time,
+                coincidence_window,
+                histogram_bins,
+                sync_channel,
+            )
+        })
+    };
     Ok(())
 }
