@@ -10,7 +10,7 @@ fn main() {
     if target.contains("windows") {
         lib_dir = Path::new("C:\\Program Files\\PicoQuant\\HydraHarp-HHLibv30");
         println!("cargo:rustc-link-search={}", &lib_dir.display());
-        println!("cargo:rustc-link-lib=hhlib");
+        println!("cargo:rustc-link-lib=hhlib64");
     } else {
         println!("cargo:rustc-link-lib=hh400");
     }
