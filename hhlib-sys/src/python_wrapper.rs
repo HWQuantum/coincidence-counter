@@ -426,16 +426,19 @@ pub fn measure_and_get_counts(
                     // Go through all the times in the sync channel
                     for (i, sync_time) in sync_buffer.iter().enumerate() {
 
-                        let delta_t = time - sync_time;
-                        if delta_t > coincidence_window {
-                            remove_index = Some(i);
-                        } else {
-                            // we have a coincidence - add to the coincidences
-                            coincidences[channel as usize] += 1;
-                            for &(bin_time, bin_index) in histogram_times.iter() {
-                                if delta_t < (bin_time as u64) {
-                                    histograms[channel as usize][bin_index] += 1;
-                                    break;
+                        // This 'if' should resolve the error where a time is less than sync time
+                        if time > sync_time {
+                            let delta_t = time - sync_time;
+                            if delta_t > coincidence_window {
+                                remove_index = Some(i);
+                            } else {
+                                // we have a coincidence - add to the coincidences
+                                coincidences[channel as usize] += 1;
+                                for &(bin_time, bin_index) in histogram_times.iter() {
+                                    if delta_t < (bin_time as u64) {
+                                        histograms[channel as usize][bin_index] += 1;
+                                        break;
+                                    }
                                 }
                             }
                         }
