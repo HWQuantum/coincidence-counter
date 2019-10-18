@@ -45,6 +45,10 @@ class MainWindow(QWidget):
             combine_patterns_no_angle(X, Y,
                                       [self.phase_controller.get_values()]) *
             self.zernike_set.get_values())
+        # im = np.angle(
+        #     combine_patterns_no_angle(X, Y,
+        #                               [(1, 1, (0, 360), 0, (0, 0)), (1, -1, (0, 360), 0, (0, 0))]) *
+        #     self.zernike_set.get_values())
         self.fs_plot.set_image(im)
         self.little_plot.set_image(im)
 

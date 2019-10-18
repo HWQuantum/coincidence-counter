@@ -8,10 +8,13 @@ in
 	stdenv.mkDerivation {
 	  name = "rust-env";
 	  buildInputs = [
-    ((rustChannelOf { date = "2019-06-21"; channel = "nightly"; }).rust.override {extensions = [ "rust-src" ]; })
+    ((rustChannelOf { date = "2019-10-16"; channel = "nightly"; }).rust.override {extensions = [ "rust-src" ]; })
 	    llvmPackages.libclang
-      	    hharp
-	    (python3.withPackages(ps: with ps; [ pyqtgraph pyqt5 cython numba matplotlib numpy opticspy sympy scipy ]))
+      hharp
+			(python3.buildEnv.override {
+			  extraLibs = with python3Packages; [ pyqtgraph pyqt5 cython numba matplotlib numpy opticspy sympy scipy ];
+			  ignoreCollisions = true;
+			})
 	    xorg.libxcb.dev
 	  ];
     LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
